@@ -1,30 +1,35 @@
-<script setup lang="ts">
-import Header from './components/Header.vue'
-import Hero from './components/Hero.vue'
-import Features from './components/Features.vue'
-import Services from './components/Services.vue'
-import FeaturedProducts from './components/FeaturedProducts.vue'
-import Testimonials from './components/Testimonials.vue'
-import CTA from './components/CTA.vue'
-import Footer from './components/Footer.vue'
-</script>
-
 <template>
-  <div class="app">
-    <Header />
-    <Hero />
-    <Features />
-    <Services />
-    <FeaturedProducts />
-    <Testimonials />
-    <CTA />
-    <Footer />
+  <div :class="{ 'dark': isDark }" class="min-h-screen">
+    <div class="min-h-screen flex flex-col bg-bg-primary dark:bg-bg-dark text-coffee-dark dark:text-coffee-cream transition-colors duration-300">
+      <Navbar :is-dark="isDark" @toggle-theme="toggleTheme" />
+      <main class="flex-1">
+        <RouterView />
+      </main>
+      <Footer />
+    </div>
   </div>
 </template>
 
-<style scoped>
-.app {
-  width: 100%;
-  min-height: 100vh;
+<script setup>
+import { ref, onMounted } from 'vue'
+import { RouterView } from 'vue-router'
+import Navbar from './components/Navbar.vue'
+import Footer from './components/Footer.vue'
+
+const isDark = ref(false)
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+  document.documentElement.classList.toggle('dark', isDark.value)
 }
-</style>
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme === 'dark') {
+    isDark.value = true
+    document.documentElement.classList.add('dark')
+  }
+})
+</script>
+
