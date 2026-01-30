@@ -31,3 +31,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# TypeScript build info
+*.tsbuildinfo
+
