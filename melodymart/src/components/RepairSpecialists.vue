@@ -24,71 +24,117 @@ const handleSpecialistError = (event: Event) => {
 </script>
 
 <template>
-  <section class="section-shell bg-white">
-    <div class="section-inner">
-      <div class="section-heading">
-        <div class="heading-text">
-          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Repair Specialists</h2>
-          <p class="text-gray-600">Expert technicians for your instruments</p>
-        </div>
-        <RouterLink to="/repairs" class="section-link">
-          View All
-          <svg class="mm-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </RouterLink>
+  <section id="repairs" class="py-16 md:py-24 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Section Header -->
+      <div class="text-center mb-12">
+        <span class="inline-block mb-4 px-3 py-1 bg-purple-100 text-purple-700 border border-purple-200 rounded-full text-xs font-semibold uppercase tracking-wider">
+          Expert Technicians
+        </span>
+
+        <h2 class="text-3xl md:text-5xl font-bold mb-4 text-black">
+          Repair Specialists
+        </h2>
+
+        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+          From tuning to total restoration, our skilled technicians ensure your instruments sound their absolute best.
+        </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div v-for="specialist in specialists" :key="specialist.id" class="group bg-white rounded-2xl overflow-hidden border border-gray-200 hover:border-purple-300 hover:shadow-2xl transition-all">
-          <div class="relative">
-            <div class="h-48 bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center">
-              <img
-                :src="resolveSpecialistImage(specialist.image)"
-                :alt="specialist.name"
-                class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl group-hover:scale-110 transition-transform"
-                @error="handleSpecialistError"
-              />
-            </div>
-            <div v-if="specialist.verified" class="absolute top-4 right-4 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-              <svg class="mm-icon-sm text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+      <!-- Specialists Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        <div
+          v-for="specialist in specialists"
+          :key="specialist.id"
+          class="group overflow-hidden rounded-2xl border border-slate-200 bg-white hover:shadow-2xl transition-all duration-300"
+        >
+          <div class="relative aspect-square overflow-hidden bg-slate-100">
+            <img
+              :src="resolveSpecialistImage(specialist.image)"
+              :alt="specialist.name"
+              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              @error="handleSpecialistError"
+            />
+
+            <span
+              v-if="specialist.verified"
+              class="absolute top-4 right-4 px-2 py-1 bg-green-500 text-white text-[10px] font-bold rounded flex items-center shadow-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 mr-1">
+                <circle cx="12" cy="8" r="6"></circle>
+                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
               </svg>
-            </div>
-            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-white/90 rounded-full shadow-lg">
-              <div class="flex items-center gap-1.5">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-xs font-semibold text-gray-700">{{ specialist.responseTime }}</span>
-              </div>
+              Verified
+            </span>
+
+            <div class="absolute bottom-4 left-4">
+              <span class="px-2 py-1 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-slate-700 rounded shadow-sm border border-slate-200 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                {{ specialist.responseTime }} response
+              </span>
             </div>
           </div>
+
           <div class="p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-1">{{ specialist.name }}</h3>
-            <p class="text-sm text-purple-600 font-semibold mb-4">{{ specialist.specialty }}</p>
-            <div class="space-y-2 mb-4 pb-4 border-b border-gray-100">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Experience</span>
-                <span class="font-semibold">{{ specialist.experience }}</span>
+            <h3 class="text-xl font-bold mb-1 text-black">
+              {{ specialist.name }}
+            </h3>
+
+            <p class="text-sm text-purple-600 mb-3">
+              {{ specialist.specialty }}
+            </p>
+
+            <div class="flex items-center gap-1 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-yellow-500">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span class="font-semibold text-black">{{ specialist.rating }}</span>
+              <span class="text-sm text-slate-500">
+                ({{ specialist.reviews }} reviews)
+              </span>
+            </div>
+
+            <div class="space-y-2 mb-4 text-sm text-slate-600">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>{{ specialist.experience }} experience</span>
               </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Jobs Done</span>
-                <span class="font-semibold">{{ specialist.completedJobs }}+</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Rating</span>
-                <span class="font-semibold">⭐ {{ specialist.rating }}</span>
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>{{ specialist.completedJobs }}+ jobs fixed</span>
               </div>
             </div>
-            <button class="w-full py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-md">Request Service</button>
+
+            <div class="border-t border-slate-100 pt-4 flex items-center justify-between">
+              <RouterLink
+                to="/repairs"
+                class="w-full text-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-purple-500/20"
+              >
+                Request Service
+              </RouterLink>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="section-cta">
-        <RouterLink to="/repairs" class="inline-flex items-center gap-2 px-8 py-4 border-2 border-purple-600 text-purple-600 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all">
+      <!-- View All Button -->
+      <div class="mt-16 text-center">
+        <RouterLink
+          to="/repairs"
+          class="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full transition-all hover:scale-105 shadow-xl shadow-purple-500/20"
+        >
           View All Specialists
-          <svg class="mm-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
         </RouterLink>
       </div>
@@ -97,80 +143,5 @@ const handleSpecialistError = (event: Event) => {
 </template>
 
 <style scoped>
-.section-shell {
-  width: 100%;
-  padding: 5rem 1.5rem;
-}
-
-.section-inner {
-  max-width: 1150px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-}
-
-.section-heading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1.75rem;
-}
-
-.heading-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 640px;
-}
-
-.heading-text p {
-  margin: 0;
-}
-
-.section-link {
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  color: #7c3aed;
-  transition: color 0.2s ease;
-}
-
-.section-link:hover {
-  color: #6d28d9;
-}
-
-.section-cta {
-  text-align: center;
-  margin-top: 1rem;
-}
-
-@media (min-width: 768px) {
-  .section-inner {
-    gap: 3.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .section-heading {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    text-align: left;
-  }
-
-  .section-link {
-    display: inline-flex;
-    align-self: center;
-  }
-}
-
-@media (max-width: 640px) {
-  .section-shell {
-    padding: 3.5rem 1.25rem;
-  }
-}
+/* Scoped styles removed in favor of utility classes */
 </style>

@@ -45,7 +45,7 @@ const handleGetStarted = () => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-lg">
+  <header class="sticky top-0 z-50 border-b border-app-border bg-background/80 backdrop-blur-lg">
     <nav class="mx-auto flex max-w-screen-xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4 lg:px-8" aria-label="Primary">
       <div class="flex items-center gap-3">
         <button

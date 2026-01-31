@@ -1,170 +1,226 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { ref, computed } from 'vue'
+import { Heart, Star, Search, SlidersHorizontal } from 'lucide-vue-next'
 
-const instruments = [
-  { id: 1, name: 'Fender Stratocaster', category: 'Electric Guitar', price: 1299, rating: 4.8, reviews: 324, image: 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?w=400&h=300&fit=crop', badge: 'POPULAR', condition: 'New' },
-  { id: 2, name: 'Yamaha P-125', category: 'Digital Piano', price: 899, rating: 4.9, reviews: 512, image: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400&h=300&fit=crop', badge: 'SALE', condition: 'New' },
-  { id: 3, name: 'Pearl Export Series', category: 'Drum Set', price: 1499, rating: 4.7, reviews: 234, image: 'https://images.unsplash.com/photo-1543443983-ab5fde6f7f1c?w=400&h=300&fit=crop', badge: null, condition: 'New' },
-  { id: 4, name: 'Stentor Student Violin', category: 'Violin', price: 279, rating: 4.6, reviews: 189, image: 'https://images.unsplash.com/photo-1612225330350-def8aa65ebcd?w=400&h=300&fit=crop', badge: 'SALE', condition: 'New' }
+interface Instrument {
+  id: number
+  name: string
+  category: string
+  price: number
+  rating: number
+  reviews: number
+  image: string
+  featured?: boolean
+  condition: string
+}
+
+const searchQuery = ref('')
+const selectedCategory = ref('All')
+
+const instruments: Instrument[] = [
+  {
+    id: 1,
+    name: 'Fender Stratocaster',
+    category: 'Electric Guitar',
+    price: 1299,
+    rating: 4.8,
+    reviews: 124,
+    featured: true,
+    condition: 'New',
+    image:
+      'https://images.unsplash.com/photo-1568193755668-aae18714a9f1?auto=format&fit=crop&q=80&w=1200'
+  },
+  {
+    id: 2,
+    name: 'Yamaha P-125',
+    category: 'Digital Piano',
+    price: 649,
+    rating: 4.9,
+    reviews: 89,
+    condition: 'New',
+    image:
+      'https://images.unsplash.com/photo-1599494009395-5b43c783a2d5?auto=format&fit=crop&q=80&w=1200'
+  },
+  {
+    id: 3,
+    name: 'Pearl Export Series',
+    category: 'Drum Set',
+    price: 899,
+    rating: 4.7,
+    reviews: 56,
+    featured: true,
+    condition: 'Like New',
+    image:
+      'https://images.unsplash.com/photo-1588032786045-59cefda005c0?auto=format&fit=crop&q=80&w=1200'
+  },
+  {
+    id: 4,
+    name: 'Gibson Les Paul',
+    category: 'Electric Guitar',
+    price: 2499,
+    rating: 4.9,
+    reviews: 88,
+    condition: 'New',
+    image:
+      'https://images.unsplash.com/photo-1550291652-6ea9114a47b1?auto=format&fit=crop&q=80&w=1200'
+  }
 ]
 
-const instrumentPlaceholder = new URL('../assets/placeholders/instrument-default.svg', import.meta.url).href
+const categories = ['All', ...new Set(instruments.map(i => i.category))]
 
-const isExternalSource = (source: string) => /^https?:\/\//i.test(source)
-
-const resolveInstrumentImage = (source: string) => {
-  if (!source) return instrumentPlaceholder
-  return isExternalSource(source) ? source : new URL(`../assets/${source}`, import.meta.url).href
-}
-
-const handleInstrumentError = (event: Event) => {
-  const target = event.target as HTMLImageElement | null
-  if (!target || target.dataset.fallbackApplied === 'true') return
-  target.src = instrumentPlaceholder
-  target.dataset.fallbackApplied = 'true'
-}
+const filteredItems = computed(() => {
+  return instruments.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+                         item.category.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesCategory = selectedCategory.value === 'All' || item.category === selectedCategory.value
+    
+    return matchesSearch && matchesCategory
+  })
+})
 </script>
 
 <template>
-  <section class="section-shell bg-white">
-    <div class="section-inner">
-      <div class="section-heading">
-        <div class="heading-text">
-          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Featured Instruments</h2>
-          <p class="text-gray-600">Discover our handpicked collection of premium instruments</p>
-        </div>
-        <RouterLink to="/shop" class="section-link">
-          View All
-          <svg class="mm-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </RouterLink>
+  <section id="shop" class="py-16 md:py-24 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <span class="inline-block mb-4 px-3 py-1 bg-purple-100 text-purple-700 border border-purple-200 rounded-full text-xs font-semibold uppercase tracking-wider">
+          Latest Listings
+        </span>
+
+        <h2 class="text-3xl md:text-5xl font-bold mb-4 text-black">
+          Featured Instruments
+        </h2>
+
+        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+          Handpicked premium instruments from trusted sellers.
+        </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div v-for="item in instruments" :key="item.id" class="group bg-white rounded-2xl overflow-hidden border border-gray-200 hover:border-purple-300 hover:shadow-2xl transition-all">
-          <div class="relative overflow-hidden bg-gray-100">
-            <img
-              :src="resolveInstrumentImage(item.image)"
-              :alt="item.name"
-              class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
-              @error="handleInstrumentError"
+      <!-- Search and Filter Bar -->
+      <div class="max-w-4xl mx-auto mb-12">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="relative flex-1">
+            <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search instruments, brands, or categories..."
+              class="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
             />
-            <div v-if="item.badge" class="absolute top-4 left-4">
-              <span class="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full shadow-lg">{{ item.badge }}</span>
-            </div>
-            <button class="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-lg">
-              <svg class="mm-icon-sm text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-              </svg>
-            </button>
-            <div class="absolute bottom-4 right-4 px-3 py-1 bg-white/90 text-gray-700 text-xs font-semibold rounded-full">{{ item.condition }}</div>
           </div>
-          <div class="p-5">
-            <p class="text-xs text-purple-600 font-semibold mb-1">{{ item.category }}</p>
-            <h3 class="text-lg font-bold text-gray-900 mb-3">{{ item.name }}</h3>
-            <div class="flex items-center gap-2 mb-4">
-              <svg class="mm-icon-sm text-yellow-400 fill-current" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-              </svg>
-              <span class="text-sm font-semibold">{{ item.rating }}</span>
-              <span class="text-xs text-gray-500">({{ item.reviews }})</span>
+          
+          <div class="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+            <button
+              v-for="cat in categories"
+              :key="cat"
+              @click="selectedCategory = cat"
+              :class="[
+                'px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all border',
+                selectedCategory === cat 
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/20' 
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-purple-300'
+              ]"
+            >
+              {{ cat }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <div v-if="filteredItems.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        <div
+          v-for="item in filteredItems"
+          :key="item.id"
+          class="group rounded-2xl overflow-hidden border border-slate-200 bg-white hover:shadow-2xl transition-all duration-300"
+        >
+          <!-- Image -->
+          <div class="relative aspect-square overflow-hidden bg-slate-100">
+            <img
+              :src="item.image"
+              :alt="item.name"
+              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+
+            <span
+              v-if="item.featured"
+              class="absolute top-4 left-4 px-2 py-1 bg-purple-600 text-white text-[10px] font-bold rounded shadow-lg"
+            >
+              Featured
+            </span>
+
+            <button
+              class="absolute top-4 right-4 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm transition-colors"
+            >
+              <Heart class="w-4 h-4 text-slate-600" />
+            </button>
+
+            <span
+              class="absolute bottom-4 right-4 px-2 py-1 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-slate-700 rounded shadow-sm border border-slate-200"
+            >
+              {{ item.condition }}
+            </span>
+          </div>
+
+          <!-- Content -->
+          <div class="p-6">
+            <p class="text-xs text-purple-600 font-semibold mb-1 uppercase tracking-wider">
+              {{ item.category }}
+            </p>
+
+            <h3 class="text-xl font-bold mb-2 text-black">
+              {{ item.name }}
+            </h3>
+
+            <div class="flex items-center gap-1 mb-4">
+              <Star class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span class="font-semibold text-black">{{ item.rating }}</span>
+              <span class="text-sm text-slate-500">
+                ({{ item.reviews }} reviews)
+              </span>
             </div>
-            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-              <span class="text-2xl font-bold text-gray-900">${{ item.price }}</span>
-              <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-md">Add to Cart</button>
+
+            <div class="flex items-center justify-between border-t border-slate-100 pt-4">
+              <span class="text-2xl font-bold text-purple-600">
+                ${{ item.price }}
+              </span>
+              <button
+                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-purple-500/20"
+              >
+                Buy Now
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="section-cta">
-        <RouterLink to="/shop" class="inline-flex items-center gap-2 px-8 py-4 border-2 border-purple-600 text-purple-600 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all">
-          View All Instruments
-          <svg class="mm-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      <!-- No Results State -->
+      <div v-else class="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-sm mb-4">
+          <Search class="w-8 h-8 text-slate-300" />
+        </div>
+        <h3 class="text-xl font-bold text-black mb-2">No instruments found</h3>
+        <p class="text-slate-500 mb-6">We couldn't find anything matching "{{ searchQuery }}" in {{ selectedCategory }}.</p>
+        <button 
+          @click="searchQuery = ''; selectedCategory = 'All'"
+          class="text-purple-600 font-bold hover:text-purple-700 transition-colors"
+        >
+          Clear all filters
+        </button>
+      </div>
+
+      <!-- View All -->
+      <div v-if="filteredItems.length > 0" class="mt-16 text-center">
+        <button class="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full transition-all hover:scale-105 shadow-xl shadow-purple-500/20">
+          Browse All Instruments
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
-        </RouterLink>
+        </button>
       </div>
     </div>
   </section>
 </template>
 
-<style scoped>
-.section-shell {
-  width: 100%;
-  padding: 5rem 1.5rem;
-}
-
-.section-inner {
-  max-width: 1150px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-}
-
-.section-heading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1.75rem;
-}
-
-.heading-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 640px;
-}
-
-.heading-text p {
-  margin: 0;
-}
-
-.section-link {
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  color: #7c3aed;
-  transition: color 0.2s ease;
-}
-
-.section-link:hover {
-  color: #6d28d9;
-}
-
-.section-cta {
-  text-align: center;
-  margin-top: 1rem;
-}
-
-@media (min-width: 768px) {
-  .section-inner {
-    gap: 3.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .section-heading {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    text-align: left;
-  }
-
-  .section-link {
-    display: inline-flex;
-    align-self: center;
-  }
-}
-
-@media (max-width: 640px) {
-  .section-shell {
-    padding: 3.5rem 1.25rem;
-  }
-}
-</style>
