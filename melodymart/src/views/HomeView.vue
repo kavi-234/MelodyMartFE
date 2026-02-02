@@ -20,6 +20,7 @@ import RepairSpecialists from '../components/RepairSpecialists.vue'
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <RouterLink to="/shop" class="px-8 py-4 bg-white text-primary rounded-xl font-semibold hover:bg-gray-100 transition-all shadow-lg">Start Shopping</RouterLink>
           <RouterLink to="/lessons" class="px-8 py-4 border-2 border-white text-white rounded-xl font-semibold hover:bg-white hover:text-primary transition-all">Book a Lesson</RouterLink>
+          <RouterLink to="/auth" class="px-8 py-4 border-2 border-purple-400 text-white rounded-xl font-semibold hover:bg-purple-400 transition-all">Test Auth Page</RouterLink>
         </div>
       </div>
     </section>

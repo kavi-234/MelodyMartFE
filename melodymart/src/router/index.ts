@@ -29,6 +29,11 @@ const router = createRouter({
       name: 'repairs',
       component: () => import('../views/RepairsView.vue'),
     },
+    {
+      path: '/auth',
+      name: 'auth',
+      component: () => import('../views/AuthView.vue'),
+    },
   ],
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
