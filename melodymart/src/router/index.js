@@ -18,6 +18,8 @@ const routes = [
   { path: "/dashboard/customer", component: () => import("../views/CustomerDashboard.vue"), name: "CustomerDashboard" },
   { path: "/dashboard/tutor", component: () => import("../views/TutorDashboard.vue"), name: "TutorDashboard" },
   { path: "/dashboard/repair", component: () => import("../views/RepairDashboard.vue"), name: "RepairDashboard" },
+  { path: "/dashboard/admin", component: () => import("../views/AdminDashboard.vue"), name: "AdminDashboard" },
+  { path: "/settings", component: () => import("../views/SettingsView.vue"), name: "Settings" },
 ]
 
 const router = createRouter({

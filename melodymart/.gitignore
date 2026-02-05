@@ -34,3 +34,39 @@ lerna-debug.log*
 # TypeScript build info
 *.tsbuildinfo
 
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Old node_modules backup
+node_modules_old/
+
+# Build artifacts
+*.map
+
+# Markdown files
+*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

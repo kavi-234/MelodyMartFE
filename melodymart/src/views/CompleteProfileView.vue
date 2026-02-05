@@ -48,13 +48,25 @@ const handleSubmit = async () => {
   formData.append('role', selectedRole.value)
 
   if (selectedRole.value === 'tutor') {
+    if (!specialization.value || !experience.value || !hourlyRate.value || !bio.value) {
+      error.value = 'Please fill in all tutor fields'
+      uploading.value = false
+      return
+    }
     formData.append('specialization', specialization.value)
     formData.append('experience', experience.value)
     formData.append('hourlyRate', hourlyRate.value)
     formData.append('bio', bio.value)
   } else if (selectedRole.value === 'repair_specialist') {
+    if (!serviceTypes.value) {
+      error.value = 'Please fill in service types'
+      uploading.value = false
+      return
+    }
     formData.append('serviceTypes', serviceTypes.value)
-    formData.append('certifications', certifications.value)
+    if (certifications.value) {
+      formData.append('certifications', certifications.value)
+    }
   }
 
   documents.value.forEach(file => {
@@ -64,13 +76,21 @@ const handleSubmit = async () => {
   const success = await authStore.completeProfile(formData)
 
   if (success) {
-    // Redirect to role-based dashboard
-    if (selectedRole.value === 'customer') {
+    // Check user status after profile completion
+    const user = authStore.user
+    
+    if (user?.role === 'customer') {
+      // Customer can directly access dashboard
       router.push('/dashboard/customer')
-    } else if (selectedRole.value === 'tutor') {
-      router.push('/dashboard/tutor')
-    } else if (selectedRole.value === 'repair_specialist') {
-      router.push('/dashboard/repair')
+    } else if (user?.role === 'tutor' || user?.role === 'repair_specialist') {
+      // Show pending approval message
+      if (user.verificationStatus === 'PENDING_APPROVAL') {
+        alert('Profile completed successfully! Your account is pending admin approval. You will be notified once approved.')
+        router.push('/')
+      } else if (user.verificationStatus === 'APPROVED') {
+        // In case they were already approved
+        router.push(`/dashboard/${user.role}`)
+      }
     }
   } else {
     error.value = authStore.error || 'Failed to complete profile'

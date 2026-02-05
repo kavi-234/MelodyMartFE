@@ -65,9 +65,26 @@ const handleGoogleCallback = async () => {
     const idToken = params.get('id_token')
     
     if (idToken) {
-      const success = await authStore.googleLogin(idToken)
-      if (success) {
-        redirectByRole()
+      const result = await authStore.googleLogin(idToken)
+      if (result.success) {
+        // Clear hash from URL
+        window.location.hash = ''
+        
+        // Navigate based on user status
+        if (result.requiresProfileCompletion) {
+          router.push('/complete-profile')
+        } else if (result.user.verificationStatus === 'PENDING_APPROVAL') {
+          // Show pending approval message
+          alert('Your account is pending admin approval. You will be able to access your dashboard once approved.')
+          router.push('/')
+        } else if (result.user.verificationStatus === 'REJECTED') {
+          authStore.error = 'Your account has been rejected. Please contact support.'
+          authStore.logout()
+          window.location.hash = ''
+        } else {
+          // Navigate to role-based dashboard
+          redirectByRole()
+        }
       } else {
         window.location.hash = ''
       }
@@ -78,7 +95,7 @@ const handleGoogleCallback = async () => {
 // Email/Password Auth
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
+  if (target.files && target.files.length > 0 && target.files[0]) {
     document.value = target.files[0]
   }
 }
@@ -107,7 +124,16 @@ const handleEmailLogin = async () => {
     const data = await response.json()
 
     if (!response.ok) {
-      errorMessage.value = data.message || 'Login failed'
+      // Handle specific error messages from backend
+      if (response.status === 403 && data.message.includes('pending')) {
+        errorMessage.value = data.message
+      } else if (response.status === 403 && data.message.includes('rejected')) {
+        errorMessage.value = data.message
+      } else if (response.status === 400 && data.message.includes('Google')) {
+        errorMessage.value = data.message
+      } else {
+        errorMessage.value = data.message || 'Login failed'
+      }
       return
     }
 
@@ -169,6 +195,11 @@ const handleEmailSignup = async () => {
     authStore.user = data.user
     authStore.token = data.token
 
+    // Show success message if account is pending
+    if (data.message && data.message.includes('pending')) {
+      alert(data.message)
+    }
+
     redirectByRole()
   } catch (error) {
     console.error('Signup error:', error)
@@ -191,7 +222,8 @@ const redirectByRole = () => {
     const roleRoute: Record<string, string> = {
       'customer': '/dashboard/customer',
       'tutor': '/dashboard/tutor',
-      'repair_specialist': '/dashboard/repair'
+      'repair_specialist': '/dashboard/repair',
+      'admin': '/dashboard/admin'
     }
     router.push(roleRoute[authStore.user.role] || '/')
   } else {

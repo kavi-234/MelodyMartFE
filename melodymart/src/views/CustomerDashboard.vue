@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import CartView from '../components/CartView.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -21,9 +22,16 @@ onMounted(() => {
         <p class="text-slate-400">Welcome back, {{ authStore.user?.name }}!</p>
       </div>
 
+      <!-- Cart Section -->
+      <div class="mb-8">
+        <CartView />
+      </div>
+
+      <!-- Quick Actions -->
+      <h2 class="mb-4 text-xl font-semibold text-white">Quick Actions</h2>
       <div class="grid gap-6 md:grid-cols-3">
         <div class="rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <div class="mb-4 text-4xl">🛒</div>
+          <div class="mb-4 text-4xl">📦</div>
           <h3 class="mb-2 text-xl font-semibold text-white">My Orders</h3>
           <p class="mb-4 text-slate-400">View your purchase history</p>
           <button class="rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-500">

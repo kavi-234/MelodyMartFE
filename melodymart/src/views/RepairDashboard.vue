@@ -1,15 +1,31 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-onMounted(() => {
+const verificationStatusText = computed(() => {
+  if (authStore.user?.verificationStatus === 'APPROVED') return 'Verified'
+  if (authStore.user?.verificationStatus === 'REJECTED') return 'Rejected'
+  return 'Pending Verification'
+})
+
+const verificationStatusColor = computed(() => {
+  if (authStore.user?.verificationStatus === 'APPROVED') return 'text-green-400'
+  if (authStore.user?.verificationStatus === 'REJECTED') return 'text-red-400'
+  return 'text-yellow-400'
+})
+
+onMounted(async () => {
   if (!authStore.user || authStore.user.role !== 'repair_specialist') {
     router.push('/')
+    return
   }
+  
+  // Refresh user data to get latest verification status
+  await authStore.refreshUser()
 })
 </script>
 
@@ -63,8 +79,8 @@ onMounted(() => {
           </div>
           <div>
             <div class="text-sm text-slate-400">Status</div>
-            <div :class="authStore.user?.verified ? 'text-green-400' : 'text-yellow-400'">
-              {{ authStore.user?.verified ? 'Verified' : 'Pending Verification' }}
+            <div :class="verificationStatusColor">
+              {{ verificationStatusText }}
             </div>
           </div>
         </div>

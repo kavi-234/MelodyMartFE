@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router'
 import HeroSection from '../components/HeroSection.vue'
 import FeaturedInstruments from '../components/FeaturedInstruments.vue'
-import FeaturedTutors from '../components/FeaturedTutors.vue'
+import ServicesLearning from '../components/ServicesLearning.vue'
 import RepairSpecialists from '../components/RepairSpecialists.vue'
 </script>
 
@@ -10,7 +10,7 @@ import RepairSpecialists from '../components/RepairSpecialists.vue'
   <div class="w-full">
     <HeroSection />
     <FeaturedInstruments />
-    <FeaturedTutors />
+    <ServicesLearning />
     <RepairSpecialists />
 
     <section class="py-20 bg-gradient-to-br from-primary via-purple-900 to-primary">

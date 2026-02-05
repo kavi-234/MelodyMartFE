@@ -1,86 +1,115 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Heart, Star, Search, SlidersHorizontal } from 'lucide-vue-next'
 
 interface Instrument {
-  id: number
+  _id: string
   name: string
   category: string
+  brand: string
   price: number
-  rating: number
-  reviews: number
-  image: string
-  featured?: boolean
-  condition: string
+  stock: number
+  description: string
+  image?: {
+    contentType: string
+  }
 }
 
 const searchQuery = ref('')
 const selectedCategory = ref('All')
+const instruments = ref<Instrument[]>([])
+const loading = ref(true)
 
-const instruments: Instrument[] = [
-  {
-    id: 1,
-    name: 'Fender Stratocaster',
-    category: 'Electric Guitar',
-    price: 1299,
-    rating: 4.8,
-    reviews: 124,
-    featured: true,
-    condition: 'New',
-    image:
-      'https://images.unsplash.com/photo-1568193755668-aae18714a9f1?auto=format&fit=crop&q=80&w=1200'
-  },
-  {
-    id: 2,
-    name: 'Yamaha P-125',
-    category: 'Digital Piano',
-    price: 649,
-    rating: 4.9,
-    reviews: 89,
-    condition: 'New',
-    image:
-      'https://images.unsplash.com/photo-1599494009395-5b43c783a2d5?auto=format&fit=crop&q=80&w=1200'
-  },
-  {
-    id: 3,
-    name: 'Pearl Export Series',
-    category: 'Drum Set',
-    price: 899,
-    rating: 4.7,
-    reviews: 56,
-    featured: true,
-    condition: 'Like New',
-    image:
-      'https://images.unsplash.com/photo-1588032786045-59cefda005c0?auto=format&fit=crop&q=80&w=1200'
-  },
-  {
-    id: 4,
-    name: 'Gibson Les Paul',
-    category: 'Electric Guitar',
-    price: 2499,
-    rating: 4.9,
-    reviews: 88,
-    condition: 'New',
-    image:
-      'https://images.unsplash.com/photo-1550291652-6ea9114a47b1?auto=format&fit=crop&q=80&w=1200'
-  }
-]
-
-const categories = ['All', ...new Set(instruments.map(i => i.category))]
+const categories = computed(() => ['All', ...new Set(instruments.value.map(i => i.category))])
 
 const filteredItems = computed(() => {
-  return instruments.filter(item => {
+  return instruments.value.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-                         item.category.toLowerCase().includes(searchQuery.value.toLowerCase())
+                         item.category.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                         item.brand.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesCategory = selectedCategory.value === 'All' || item.category === selectedCategory.value
     
     return matchesSearch && matchesCategory
   })
 })
+
+const fetchInstruments = async () => {
+  try {
+    const response = await fetch('http://localhost:5000/api/instruments')
+    const data = await response.json()
+    instruments.value = data.instruments || []
+  } catch (error) {
+    console.error('Error fetching instruments:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const getImageUrl = (id: string) => {
+  return `http://localhost:5000/api/instruments/${id}/image`
+}
+
+const handleAddToCart = async (instrumentId: string) => {
+  const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+
+  if (!token || !user) {
+    alert('Please login to add items to cart')
+    window.location.href = '/auth'
+    return
+  }
+
+  if (user.role !== 'customer') {
+    alert('Only customers can add items to cart')
+    return
+  }
+
+  try {
+    const response = await fetch('http://localhost:5000/api/cart/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ instrumentId, quantity: 1 })
+    })
+
+    const data = await response.json()
+
+    if (response.ok) {
+      alert('Item added to cart!')
+    } else {
+      alert(data.message || 'Failed to add to cart')
+    }
+  } catch (error) {
+    alert('Error adding to cart')
+  }
+}
+
+const handleBuyNow = (instrumentId: string) => {
+  const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+
+  if (!token || !user) {
+    alert('Please login to purchase')
+    window.location.href = '/auth'
+    return
+  }
+
+  if (user.role !== 'customer') {
+    alert('Only customers can purchase items')
+    return
+  }
+
+  // Add to cart and redirect to checkout (implement checkout later)
+  handleAddToCart(instrumentId)
+}
+
+onMounted(fetchInstruments)
 </script>
 
 <template>
-  <section id="shop" class="py-16 md:py-24 bg-white">
+  <section id="shop" class="py-16 md:py-24 bg-white dark:bg-slate-900">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="text-center mb-8">
@@ -88,11 +117,11 @@ const filteredItems = computed(() => {
           Latest Listings
         </span>
 
-        <h2 class="text-3xl md:text-5xl font-bold mb-4 text-black">
+        <h2 class="text-3xl md:text-5xl font-bold mb-4 text-black dark:text-white">
           Featured Instruments
         </h2>
 
-        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+        <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
           Handpicked premium instruments from trusted sellers.
         </p>
       </div>
@@ -128,65 +157,90 @@ const filteredItems = computed(() => {
         </div>
       </div>
 
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center py-12">
+        <div class="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="filteredItems.length === 0" class="text-center py-12">
+        <p class="text-slate-500">No instruments found</p>
+      </div>
+
       <!-- Grid -->
-      <div v-if="filteredItems.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         <div
           v-for="item in filteredItems"
-          :key="item.id"
-          class="group rounded-2xl overflow-hidden border border-slate-200 bg-white hover:shadow-2xl transition-all duration-300"
+          :key="item._id"
+          class="group rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-2xl transition-all duration-300"
         >
           <!-- Image -->
           <div class="relative aspect-square overflow-hidden bg-slate-100">
             <img
-              :src="item.image"
+              v-if="item.image"
+              :src="getImageUrl(item._id)"
               :alt="item.name"
               class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
+            <div v-else class="w-full h-full flex items-center justify-center text-slate-400">
+              No Image
+            </div>
 
             <span
-              v-if="item.featured"
-              class="absolute top-4 left-4 px-2 py-1 bg-purple-600 text-white text-[10px] font-bold rounded shadow-lg"
+              v-if="item.stock > 0"
+              class="absolute top-4 left-4 px-2 py-1 bg-green-600 text-white text-[10px] font-bold rounded shadow-lg"
             >
-              Featured
+              In Stock
             </span>
-
-            <button
-              class="absolute top-4 right-4 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm transition-colors"
-            >
-              <Heart class="w-4 h-4 text-slate-600" />
-            </button>
-
             <span
-              class="absolute bottom-4 right-4 px-2 py-1 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-slate-700 rounded shadow-sm border border-slate-200"
+              v-else
+              class="absolute top-4 left-4 px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded shadow-lg"
             >
-              {{ item.condition }}
+              Out of Stock
             </span>
+
           </div>
 
           <!-- Content -->
-          <div class="p-6">
+          <div class="p-4">
             <p class="text-xs text-purple-600 font-semibold mb-1 uppercase tracking-wider">
               {{ item.category }}
             </p>
 
-            <h3 class="text-xl font-bold mb-2 text-black">
+            <h3 class="text-lg font-bold mb-1 text-black line-clamp-1">
               {{ item.name }}
             </h3>
 
-            <div class="flex items-center gap-1 mb-4">
-              <Star class="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span class="font-semibold text-black">{{ item.rating }}</span>
-              <span class="text-sm text-slate-500">
-                ({{ item.reviews }} reviews)
-              </span>
+            <p class="text-xs text-slate-600 mb-2">{{ item.brand }}</p>
+            
+            <p class="text-xs text-slate-500 mb-3 line-clamp-1">{{ item.description }}</p>
+
+            <div class="flex items-center justify-between border-t border-slate-100 pt-3 mb-3">
+              <div>
+                <span class="text-xs text-slate-500 block">Price</span>
+                <span class="text-xl font-bold text-purple-600">
+                  Rs {{ item.price }}
+                </span>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-slate-500 block">Stock</span>
+                <span class="text-sm font-semibold text-slate-700">{{ item.stock }}</span>
+              </div>
             </div>
 
-            <div class="flex items-center justify-between border-t border-slate-100 pt-4">
-              <span class="text-2xl font-bold text-purple-600">
-                ${{ item.price }}
-              </span>
-              <button
-                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-purple-500/20"
+            <!-- Action Buttons -->
+            <div class="flex gap-2">
+              <button 
+                @click="handleAddToCart(item._id)"
+                :disabled="item.stock === 0"
+                class="flex-1 px-3 py-2 text-xs border-2 border-purple-600 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add to Cart
+              </button>
+              <button 
+                @click="handleBuyNow(item._id)"
+                :disabled="item.stock === 0"
+                class="flex-1 px-3 py-2 text-xs bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Buy Now
               </button>
@@ -195,23 +249,8 @@ const filteredItems = computed(() => {
         </div>
       </div>
 
-      <!-- No Results State -->
-      <div v-else class="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-sm mb-4">
-          <Search class="w-8 h-8 text-slate-300" />
-        </div>
-        <h3 class="text-xl font-bold text-black mb-2">No instruments found</h3>
-        <p class="text-slate-500 mb-6">We couldn't find anything matching "{{ searchQuery }}" in {{ selectedCategory }}.</p>
-        <button 
-          @click="searchQuery = ''; selectedCategory = 'All'"
-          class="text-purple-600 font-bold hover:text-purple-700 transition-colors"
-        >
-          Clear all filters
-        </button>
-      </div>
-
       <!-- View All -->
-      <div v-if="filteredItems.length > 0" class="mt-16 text-center">
+      <div v-if="!loading && filteredItems.length > 0" class="mt-16 text-center">
         <button class="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full transition-all hover:scale-105 shadow-xl shadow-purple-500/20">
           Browse All Instruments
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">

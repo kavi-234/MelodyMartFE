@@ -8,6 +8,10 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
+  const requiresProfileCompletion = computed(() => !user.value?.role || user.value?.role === 'customer' && !user.value?.profileCompleted)
+  const isPendingApproval = computed(() => user.value?.verificationStatus === 'PENDING_APPROVAL' && (user.value?.role === 'tutor' || user.value?.role === 'repair_specialist'))
+  const isApproved = computed(() => user.value?.verificationStatus === 'APPROVED' && user.value?.isVerified)
+  const isRejected = computed(() => user.value?.verificationStatus === 'REJECTED')
 
   async function googleLogin(googleToken: string) {
     loading.value = true
@@ -22,7 +26,8 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       if (!response.ok) {
-        throw new Error('Google login failed')
+        const data = await response.json()
+        throw new Error(data.message || 'Google login failed')
       }
 
       const data = await response.json()
@@ -35,10 +40,16 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('user', JSON.stringify(data.user))
       localStorage.setItem('token', data.token)
       
-      return true
+      // Return data to determine where to navigate
+      return {
+        success: true,
+        user: data.user,
+        isNewUser: data.isNewUser,
+        requiresProfileCompletion: data.requiresProfileCompletion
+      }
     } catch (err: any) {
       error.value = err.message || 'An error occurred during login'
-      return false
+      return { success: false, error: err.message }
     } finally {
       loading.value = false
     }
@@ -76,6 +87,30 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function refreshUser() {
+    if (!token.value) return false
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/profile', {
+        headers: {
+          'Authorization': `Bearer ${token.value}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile')
+      }
+
+      const data = await response.json()
+      user.value = data.user
+      localStorage.setItem('user', JSON.stringify(data.user))
+      return true
+    } catch (err) {
+      console.error('Failed to refresh user:', err)
+      return false
+    }
+  }
+
   function logout() {
     user.value = null
     token.value = null
@@ -89,8 +124,13 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     error,
     isAuthenticated,
+    requiresProfileCompletion,
+    isPendingApproval,
+    isApproved,
+    isRejected,
     googleLogin,
     completeProfile,
+    refreshUser,
     logout
   }
 })
