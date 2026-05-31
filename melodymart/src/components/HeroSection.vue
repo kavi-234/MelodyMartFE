@@ -21,9 +21,9 @@ const handleImageError = () => {
 </script>
 
 <template>
-  <section class="relative overflow-hidden bg-primary text-white">
-    <!-- Gradient Background -->
-    <div class="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-primary/70 to-black/80 z-0"></div>
+  <section class="relative overflow-hidden bg-gradient-to-br from-purple-900 via-primary to-black text-white dark:from-purple-900 dark:via-purple-950 dark:to-black">
+    <!-- Additional Dark Overlay for better text contrast -->
+    <div class="absolute inset-0 bg-gradient-to-br from-purple-900/60 via-primary/80 to-black/90 z-0"></div>
 
     <!-- Background Image -->
     <div class="absolute inset-0 z-0 opacity-30">
@@ -108,7 +108,7 @@ const handleImageError = () => {
 
     <!-- Decorative Wave -->
     <div class="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
-      <svg class="w-full h-12 md:h-20 fill-gray-50 dark:fill-bg-dark" viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <svg class="w-full h-12 md:h-20 fill-white" viewBox="0 0 1200 120" preserveAspectRatio="none">
         <path d="M0,60 C300,100 600,20 900,60 C1050,80 1150,80 1200,60 L1200,120 L0,120 Z" />
       </svg>
     </div>

@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router'
 import HeroSection from '../components/HeroSection.vue'
 import FeaturedInstruments from '../components/FeaturedInstruments.vue'
-import FeaturedTutors from '../components/FeaturedTutors.vue'
+import ServicesLearning from '../components/ServicesLearning.vue'
 import RepairSpecialists from '../components/RepairSpecialists.vue'
 </script>
 
@@ -10,7 +10,7 @@ import RepairSpecialists from '../components/RepairSpecialists.vue'
   <div class="w-full">
     <HeroSection />
     <FeaturedInstruments />
-    <FeaturedTutors />
+    <ServicesLearning />
     <RepairSpecialists />
 
     <section class="py-20 bg-gradient-to-br from-primary via-purple-900 to-primary">
@@ -20,6 +20,7 @@ import RepairSpecialists from '../components/RepairSpecialists.vue'
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <RouterLink to="/shop" class="px-8 py-4 bg-white text-primary rounded-xl font-semibold hover:bg-gray-100 transition-all shadow-lg">Start Shopping</RouterLink>
           <RouterLink to="/lessons" class="px-8 py-4 border-2 border-white text-white rounded-xl font-semibold hover:bg-white hover:text-primary transition-all">Book a Lesson</RouterLink>
+          <RouterLink to="/repairs" class="px-8 py-4 border-2 border-purple-400 text-white rounded-xl font-semibold hover:bg-purple-400 transition-all">Request Repair</RouterLink>
         </div>
       </div>
     </section>
