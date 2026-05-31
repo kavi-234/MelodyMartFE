@@ -4,6 +4,11 @@ import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
 
+// Define emit
+const emit = defineEmits<{
+  (e: 'lesson-created'): void
+}>()
+
 const formData = ref({
   title: '',
   description: '',
@@ -86,6 +91,9 @@ const handleSubmit = async () => {
     }
 
     successMessage.value = 'Lesson created successfully!'
+    
+    // Emit event to parent
+    emit('lesson-created')
     
     // Reset form
     formData.value = {

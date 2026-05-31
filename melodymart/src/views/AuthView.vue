@@ -65,29 +65,32 @@ const handleGoogleCallback = async () => {
     const idToken = params.get('id_token')
     
     if (idToken) {
+      isLoading.value = true
       const result = await authStore.googleLogin(idToken)
+      
+      // Clear hash from URL
+      window.location.hash = ''
+      
       if (result.success) {
-        // Clear hash from URL
-        window.location.hash = ''
-        
         // Navigate based on user status
-        if (result.requiresProfileCompletion) {
-          router.push('/complete-profile')
-        } else if (result.user.verificationStatus === 'PENDING_APPROVAL') {
+        if (result.user.verificationStatus === 'PENDING_APPROVAL') {
           // Show pending approval message
-          alert('Your account is pending admin approval. You will be able to access your dashboard once approved.')
-          router.push('/')
-        } else if (result.user.verificationStatus === 'REJECTED') {
-          authStore.error = 'Your account has been rejected. Please contact support.'
+          errorMessage.value = 'Your account is pending admin approval. You will be able to access your dashboard once approved.'
           authStore.logout()
-          window.location.hash = ''
+        } else if (result.user.verificationStatus === 'REJECTED') {
+          errorMessage.value = 'Your account has been rejected. Please contact support.'
+          authStore.logout()
+        } else if (!result.user.profileCompleted || result.user.profileCompleted === false) {
+          // All users who haven't completed profile should choose their role
+          router.push('/complete-profile')
         } else {
           // Navigate to role-based dashboard
           redirectByRole()
         }
       } else {
-        window.location.hash = ''
+        errorMessage.value = result.error || 'Google login failed'
       }
+      isLoading.value = false
     }
   }
 }
@@ -238,10 +241,20 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-slate-950 text-slate-100">
+  <div class="flex min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
     <!-- Left Side: Branding/Image -->
-    <div class="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-purple-900 via-slate-900 to-black p-12 lg:flex">
-      <div>
+    <div class="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-purple-100 via-white to-purple-50 p-12 lg:flex dark:from-purple-900 dark:via-slate-900 dark:to-black">
+      <!-- Background Image -->
+      <div class="absolute inset-0 opacity-100 dark:opacity-20">
+        <img 
+          src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=2070&auto=format&fit=crop"
+          alt="Music Background"
+          class="h-full w-full object-cover"
+        />
+      </div>
+      
+      <!-- Content Overlay -->
+      <div class="relative z-10">
         <div class="flex items-center gap-3">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/20 text-white">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6">
@@ -249,31 +262,33 @@ onMounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 3v10.5a3.5 3.5 0 11-2-3.2" />
             </svg>
           </span>
-          <span class="bg-gradient-to-r from-purple-200 via-purple-400 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+          <span class="text-3xl font-bold text-purple-700 dark:bg-gradient-to-r dark:from-purple-200 dark:via-purple-400 dark:to-purple-200 dark:bg-clip-text dark:text-transparent">
             Melody Mart
           </span>
         </div>
-        <p class="mt-4 text-xl text-purple-200/80">
+        <p class="mt-4 text-xl text-purple-800/90 dark:text-purple-200/80">
           Your one-stop shop for everything musical.
         </p>
       </div>
       
-      <div class="space-y-6">
-        <blockquote class="text-xl font-medium leading-relaxed text-slate-300">
+      <div class="space-y-6 relative z-10">
+        <blockquote class="max-w-xl text-xl font-medium leading-relaxed text-slate-800 dark:text-slate-300">
           "The best place to find high-quality instruments and expert tutors. My journey in music started here!"
         </blockquote>
         <div class="flex items-center gap-4">
-          <div class="h-12 w-12 rounded-full bg-slate-700/50"></div>
+          <div class="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+            AC
+          </div>
           <div>
-             <div class="font-semibold text-white">Alex Chen</div>
-             <div class="text-sm text-slate-400">Professional Guitarist</div>
+             <div class="font-semibold text-slate-900 dark:text-white">Alex Chen</div>
+             <div class="text-sm text-slate-600 dark:text-slate-400">Professional Guitarist</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Right Side: Form -->
-    <div class="flex w-full flex-col justify-center bg-slate-950 px-8 py-12 lg:w-1/2 lg:px-16 xl:px-24">
+    <div class="flex w-full flex-col justify-center bg-slate-50 px-8 py-12 lg:w-1/2 lg:px-16 xl:px-24 dark:bg-slate-950">
       <div class="mb-8 flex items-center gap-2 lg:hidden">
         <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
@@ -281,26 +296,26 @@ onMounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 3v10.5a3.5 3.5 0 11-2-3.2" />
             </svg>
         </span>
-        <span class="text-2xl font-bold text-white">Melody Mart</span>
+        <span class="text-2xl font-bold text-slate-900 dark:text-white">Melody Mart</span>
       </div>
 
       <div class="mx-auto w-full max-w-md">
-        <h1 class="mb-2 text-3xl font-bold tracking-tight text-white">
+        <h1 class="mb-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           {{ isLogin ? 'Welcome back' : 'Create an account' }}
         </h1>
-        <p class="mb-8 text-slate-400">
+        <p class="mb-8 text-slate-600 dark:text-slate-400">
           {{ isLogin ? 'Choose your preferred login method' : 'Start your musical journey today' }}
         </p>
 
         <!-- Tab Navigation -->
-        <div class="mb-6 flex gap-2 rounded-xl bg-slate-900/50 p-1">
+        <div class="mb-6 flex gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-900/50">
           <button
             @click="switchTab('google')"
             :class="[
               'flex-1 rounded-lg px-4 py-2 text-sm font-medium transition',
               activeTab === 'google' 
                 ? 'bg-purple-600 text-white shadow-lg' 
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             ]"
           >
             Google Login
@@ -311,7 +326,7 @@ onMounted(() => {
               'flex-1 rounded-lg px-4 py-2 text-sm font-medium transition',
               activeTab === 'email' 
                 ? 'bg-purple-600 text-white shadow-lg' 
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             ]"
           >
             Email Login
@@ -323,7 +338,7 @@ onMounted(() => {
           <button 
             @click="initiateGoogleLogin" 
             type="button"
-            class="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-800 bg-white px-4 py-3 font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+            class="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50 dark:border-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-50"
           >
             <svg class="h-5 w-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -334,11 +349,11 @@ onMounted(() => {
             Continue with Google
           </button>
 
-          <div v-if="authStore.error" class="rounded-lg bg-red-900/20 p-3 text-sm text-red-400">
+          <div v-if="authStore.error" class="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
             {{ authStore.error }}
           </div>
 
-          <p class="text-center text-xs text-slate-500">
+          <p class="text-center text-xs text-slate-500 dark:text-slate-500">
             By continuing, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
@@ -351,17 +366,17 @@ onMounted(() => {
               @click="isLogin = true"
               :class="[
                 'px-4 py-1 text-sm font-medium transition',
-                isLogin ? 'text-purple-400' : 'text-slate-500 hover:text-slate-300'
+                isLogin ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300'
               ]"
             >
               Login
             </button>
-            <span class="text-slate-600">|</span>
+            <span class="text-slate-400 dark:text-slate-600">|</span>
             <button
               @click="isLogin = false"
               :class="[
                 'px-4 py-1 text-sm font-medium transition',
-                !isLogin ? 'text-purple-400' : 'text-slate-500 hover:text-slate-300'
+                !isLogin ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300'
               ]"
             >
               Sign Up
@@ -371,26 +386,26 @@ onMounted(() => {
           <form @submit.prevent="handleEmailSubmit" class="space-y-4">
             <!-- Name (Signup only) -->
             <div v-if="!isLogin">
-              <label for="name" class="mb-1 block text-sm font-medium text-slate-300">Full Name</label>
+              <label for="name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
               <input 
                 id="name"
                 v-model="name"
                 type="text" 
                 required
-                class="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:placeholder-slate-500"
                 placeholder="John Doe"
               />
             </div>
             
             <!-- Email -->
             <div>
-              <label for="email" class="mb-1 block text-sm font-medium text-slate-300">Email Address</label>
+              <label for="email" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
               <input 
                 id="email"
                 v-model="email"
                 type="email" 
                 required
-                class="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:placeholder-slate-500"
                 placeholder="name@example.com"
               />
             </div>
@@ -398,8 +413,8 @@ onMounted(() => {
             <!-- Password -->
             <div>
               <div class="mb-1 flex items-center justify-between">
-                <label for="password" class="block text-sm font-medium text-slate-300">Password</label>
-                <button v-if="isLogin" type="button" class="text-sm font-medium text-purple-400 hover:text-purple-300">
+                <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+                <button v-if="isLogin" type="button" class="text-sm font-medium text-purple-600 hover:text-purple-500 dark:text-purple-400 dark:hover:text-purple-300">
                   Forgot password?
                 </button>
               </div>
@@ -409,14 +424,14 @@ onMounted(() => {
                 type="password" 
                 required
                 :minlength="isLogin ? undefined : 6"
-                class="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:placeholder-slate-500"
                 placeholder="••••••••"
               />
             </div>
 
             <!-- Role Selection (Signup only) -->
             <div v-if="!isLogin">
-              <label class="mb-2 block text-sm font-medium text-slate-300">I am a:</label>
+              <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">I am a:</label>
               <div class="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -425,7 +440,7 @@ onMounted(() => {
                     'rounded-lg border px-3 py-2 text-sm font-medium transition',
                     role === 'customer'
                       ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-slate-800 bg-slate-900/50 text-slate-400 hover:border-slate-700'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:border-slate-700'
                   ]"
                 >
                   Customer
@@ -437,7 +452,7 @@ onMounted(() => {
                     'rounded-lg border px-3 py-2 text-sm font-medium transition',
                     role === 'tutor'
                       ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-slate-800 bg-slate-900/50 text-slate-400 hover:border-slate-700'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:border-slate-700'
                   ]"
                 >
                   Tutor
@@ -449,7 +464,7 @@ onMounted(() => {
                     'rounded-lg border px-3 py-2 text-sm font-medium transition',
                     role === 'repair_specialist'
                       ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-slate-800 bg-slate-900/50 text-slate-400 hover:border-slate-700'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:border-slate-700'
                   ]"
                 >
                   Repair
@@ -459,7 +474,7 @@ onMounted(() => {
 
             <!-- Document Upload (Signup only, for tutor/repair) -->
             <div v-if="!isLogin && (role === 'tutor' || role === 'repair_specialist')">
-              <label for="document" class="mb-1 block text-sm font-medium text-slate-300">
+              <label for="document" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                 {{ role === 'tutor' ? 'Teaching Certificate' : 'License/Certificate' }}
                 <span class="text-red-400">*</span>
               </label>
@@ -468,15 +483,15 @@ onMounted(() => {
                 type="file" 
                 @change="handleFileChange"
                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                class="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-2 text-sm text-slate-100 file:mr-4 file:rounded-lg file:border-0 file:bg-purple-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-purple-500"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 file:mr-4 file:rounded-lg file:border-0 file:bg-purple-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100"
               />
-              <p class="mt-1 text-xs text-slate-500">
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-500">
                 Upload your {{ role === 'tutor' ? 'teaching certificate' : 'professional license' }} (JPG, PNG, PDF, DOC, DOCX - Max 5MB)
               </p>
             </div>
 
             <!-- Error Message -->
-            <div v-if="errorMessage || authStore.error" class="rounded-lg bg-red-900/20 p-3 text-sm text-red-400">
+            <div v-if="errorMessage || authStore.error" class="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
               {{ errorMessage || authStore.error }}
             </div>
 

@@ -135,7 +135,7 @@ onMounted(fetchInstruments)
               v-model="searchQuery"
               type="text"
               placeholder="Search instruments, brands, or categories..."
-              class="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+              class="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-black"
             />
           </div>
           

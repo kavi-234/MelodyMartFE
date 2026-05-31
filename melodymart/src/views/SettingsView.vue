@@ -35,7 +35,9 @@ const formData = ref({
   name: '',
   phone: '',
   experience: '',
-  specialization: ''
+  specialization: '',
+  hourlyRate: '',
+  bio: ''
 })
 
 const avatarFile = ref<File | null>(null)
@@ -75,7 +77,9 @@ const fetchUserProfile = async () => {
       name: data.user.name,
       phone: data.user.phone || '',
       experience: data.user.experience || '',
-      specialization: data.user.specialization || ''
+      specialization: data.user.specialization || '',
+      hourlyRate: data.user.hourlyRate || '',
+      bio: data.user.bio || ''
     }
   } catch (err: any) {
     error.value = err.message
@@ -130,9 +134,25 @@ const handleSubmit = async () => {
     
     formDataToSend.append('name', formData.value.name.trim())
     
-    // Only include phone for non-repair specialists
-    if (user.value?.role !== 'repair_specialist' && formData.value.phone) {
+    // Only include phone for customers (exclude for tutors and repair specialists)
+    if (user.value?.role === 'customer' && formData.value.phone) {
       formDataToSend.append('phone', formData.value.phone.trim())
+    }
+    
+    // Include tutor-specific fields
+    if (user.value?.role === 'tutor') {
+      if (formData.value.experience) {
+        formDataToSend.append('experience', String(formData.value.experience))
+      }
+      if (formData.value.specialization) {
+        formDataToSend.append('specialization', formData.value.specialization.trim())
+      }
+      if (formData.value.hourlyRate) {
+        formDataToSend.append('hourlyRate', String(formData.value.hourlyRate))
+      }
+      if (formData.value.bio) {
+        formDataToSend.append('bio', formData.value.bio.trim())
+      }
     }
     
     // Include experience and specialization for repair specialists
@@ -305,8 +325,8 @@ onMounted(() => {
               />
             </div>
 
-            <!-- Phone (for non-repair specialists) -->
-            <div v-if="user.role !== 'repair_specialist'">
+            <!-- Phone (for customers only) -->
+            <div v-if="user.role === 'customer'">
               <label for="phone" class="block text-sm font-medium text-slate-300 mb-2">
                 Phone Number
               </label>
@@ -317,6 +337,69 @@ onMounted(() => {
                 placeholder="+1 (555) 000-0000"
                 class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-600"
               />
+            </div>
+
+            <!-- Tutor-specific fields -->
+            <div v-if="user.role === 'tutor'">
+              <div class="space-y-4">
+                <!-- Specialization -->
+                <div>
+                  <label for="specialization-tutor" class="block text-sm font-medium text-slate-300 mb-2">
+                    Specialization *
+                  </label>
+                  <input
+                    v-model="formData.specialization"
+                    type="text"
+                    id="specialization-tutor"
+                    placeholder="e.g., Piano, Guitar, Violin"
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-600"
+                  />
+                </div>
+
+                <!-- Experience -->
+                <div>
+                  <label for="experience-tutor" class="block text-sm font-medium text-slate-300 mb-2">
+                    Years of Experience *
+                  </label>
+                  <input
+                    v-model="formData.experience"
+                    type="number"
+                    id="experience-tutor"
+                    placeholder="e.g., 5"
+                    min="0"
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-600"
+                  />
+                </div>
+
+                <!-- Hourly Rate -->
+                <div>
+                  <label for="hourlyRate" class="block text-sm font-medium text-slate-300 mb-2">
+                    Hourly Rate (Rs) *
+                  </label>
+                  <input
+                    v-model="formData.hourlyRate"
+                    type="number"
+                    id="hourlyRate"
+                    placeholder="e.g., 2000"
+                    min="0"
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-600"
+                  />
+                </div>
+
+                <!-- Bio -->
+                <div>
+                  <label for="bio" class="block text-sm font-medium text-slate-300 mb-2">
+                    Bio / About You
+                  </label>
+                  <textarea
+                    v-model="formData.bio"
+                    id="bio"
+                    rows="4"
+                    placeholder="Tell students about your teaching experience, qualifications, and teaching style..."
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-600 resize-none"
+                  ></textarea>
+                </div>
+              </div>
             </div>
 
             <!-- Experience (for repair specialists) -->
