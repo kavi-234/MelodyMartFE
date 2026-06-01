@@ -74,7 +74,7 @@ onMounted(fetchInstruments)
       <div v-for="item in instruments" :key="item._id" 
         class="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
         
-        <img v-if="item.image" :src="`http://localhost:5000/api/instruments/${item._id}/image`" 
+        <img v-if="item.imageUrl" :src="item.imageUrl || `http://localhost:5000/api/instruments/${item._id}/image`" 
           :alt="item.name" class="mb-3 h-40 w-full rounded object-cover" />
         
         <div class="mb-2 flex items-start justify-between">

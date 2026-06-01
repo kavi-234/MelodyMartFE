@@ -17,6 +17,7 @@ const cartItems = ref<CartItem[]>([])
 const cartTotal = ref(0)
 const loading = ref(false)
 const error = ref('')
+const checkoutLoading = ref(false)
 
 const fetchCart = async () => {
   loading.value = true
@@ -118,6 +119,52 @@ const getImageUrl = (instrumentId: string) => {
   return `http://localhost:5000/api/instruments/${instrumentId}/image`
 }
 
+const proceedToCheckout = async () => {
+  checkoutLoading.value = true
+  error.value = ''
+
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Please login before checking out')
+    }
+
+    const response = await fetch('http://localhost:5000/api/payments/payhere/initiate', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to initialize checkout')
+    }
+
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = data.actionUrl
+    form.target = '_self'
+
+    Object.entries(data.payload).forEach(([key, value]) => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = key
+      input.value = String(value)
+      form.appendChild(input)
+    })
+
+    document.body.appendChild(form)
+    form.submit()
+    document.body.removeChild(form)
+  } catch (err: any) {
+    error.value = err.message || 'Failed to proceed to checkout'
+  } finally {
+    checkoutLoading.value = false
+  }
+}
+
 onMounted(() => {
   fetchCart()
 })
@@ -214,9 +261,11 @@ onMounted(() => {
           </span>
         </div>
         <button
+          @click="proceedToCheckout"
+          :disabled="checkoutLoading"
           class="mt-4 w-full rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 font-semibold text-white hover:from-purple-700 hover:to-indigo-700"
         >
-          Proceed to Checkout
+          {{ checkoutLoading ? 'Redirecting to PayHere...' : 'Proceed to Checkout' }}
         </button>
       </div>
     </div>

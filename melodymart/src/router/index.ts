@@ -42,6 +42,11 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/payment/return',
+      name: 'payment-return',
+      component: () => import('../views/PaymentReturnView.vue'),
+    },
+    {
       path: '/dashboard/customer',
       name: 'customer-dashboard',
       component: () => import('../views/CustomerDashboard.vue'),
@@ -75,6 +80,13 @@ const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
+    }
+
+    if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'smooth',
+      }
     } else {
       return { top: 0 }
     }
