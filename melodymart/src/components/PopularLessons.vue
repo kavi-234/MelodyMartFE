@@ -56,15 +56,49 @@ const getLevelColor = (level: string) => {
   return colors[level] || 'bg-slate-100 text-slate-700 border-slate-200'
 }
 
-const handleBookLesson = (lessonId: string) => {
+import { useAuthStore } from '../stores/auth'
+const authStore = useAuthStore()
+
+const handleBookLesson = async (lessonId: string) => {
   const token = localStorage.getItem('token')
   if (!token) {
     alert('Please login to book a lesson')
     window.location.href = '/auth'
     return
   }
-  // TODO: Navigate to lesson details or booking page
-  console.log('Book lesson:', lessonId)
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/lessons/${lessonId}/enroll`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      alert(err.message || 'Failed to enroll in lesson')
+      return
+    }
+
+    const data = await res.json()
+    // update local UI: increment enrolledStudents count for the lesson
+    const idx = lessons.value.findIndex(l => l._id === lessonId)
+    if (idx !== -1) {
+      // push a placeholder to enrolledStudents to reflect count change
+      lessons.value[idx].enrolledStudents = lessons.value[idx].enrolledStudents || []
+      lessons.value[idx].enrolledStudents.push(authStore.user?.userId || authStore.user?._id || 'me')
+    }
+
+    // increment global count in auth store so sidebar badge updates
+    authStore.incrementMyLessonsCount()
+
+    alert('Enrolled successfully')
+  } catch (error) {
+    console.error('Failed to enroll in lesson:', error)
+    alert('Failed to enroll in lesson')
+  }
 }
 
 const handleViewDetails = async (lessonId: string) => {

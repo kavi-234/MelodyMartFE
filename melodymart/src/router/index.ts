@@ -48,9 +48,17 @@ const router = createRouter({
     },
     {
       path: '/dashboard/customer',
-      name: 'customer-dashboard',
-      component: () => import('../views/CustomerDashboard.vue'),
-      meta: { requiresAuth: true, role: 'customer', requiresApproval: true }
+      component: () => import('../layouts/CustomerLayout.vue'),
+      meta: { requiresAuth: true, role: 'customer', requiresApproval: true },
+      children: [
+        { path: '', name: 'customer-dashboard', component: () => import('../views/CustomerDashboard.vue') },
+        { path: 'home', name: 'customer-home', component: () => import('../views/HomeView.vue') },
+        { path: 'cart', name: 'customer-cart', component: () => import('../views/MyCartView.vue') },
+        { path: 'orders', name: 'customer-orders', component: () => import('../views/OrdersView.vue') },
+        { path: 'lessons', name: 'customer-lessons', component: () => import('../views/LessonsView.vue') },
+        { path: 'services', name: 'customer-services', component: () => import('../views/RequestedServicesView.vue') },
+        { path: 'settings', name: 'customer-settings', component: () => import('../views/SettingsView.vue') },
+      ],
     },
     {
       path: '/dashboard/tutor',

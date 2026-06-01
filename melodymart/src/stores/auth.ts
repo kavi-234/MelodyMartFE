@@ -104,11 +104,35 @@ export const useAuthStore = defineStore('auth', () => {
       const data = await response.json()
       user.value = data.user
       localStorage.setItem('user', JSON.stringify(data.user))
+      // try to refresh lesson counts if present
+      if (user.value) {
+        // no-op here; consumer can call fetchMyLessonsCount
+      }
       return true
     } catch (err) {
       console.error('Failed to refresh user:', err)
       return false
     }
+  }
+
+  const myLessonsCount = ref(0)
+
+  async function fetchMyLessonsCount() {
+    if (!token.value) return
+    try {
+      const res = await fetch('http://localhost:5000/api/lessons/student/my-lessons', {
+        headers: { 'Authorization': `Bearer ${token.value}` }
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      myLessonsCount.value = Array.isArray(data.lessons) ? data.lessons.length : 0
+    } catch (e) {
+      console.error('Failed to fetch my lessons count', e)
+    }
+  }
+
+  function incrementMyLessonsCount() {
+    myLessonsCount.value = (myLessonsCount.value || 0) + 1
   }
 
   function logout() {
@@ -123,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     loading,
     error,
+    myLessonsCount,
     isAuthenticated,
     requiresProfileCompletion,
     isPendingApproval,
@@ -131,6 +156,8 @@ export const useAuthStore = defineStore('auth', () => {
     googleLogin,
     completeProfile,
     refreshUser,
+    fetchMyLessonsCount,
+    incrementMyLessonsCount,
     logout
   }
 })

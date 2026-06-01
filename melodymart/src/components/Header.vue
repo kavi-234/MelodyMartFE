@@ -14,7 +14,6 @@ const landingNavLinks = [
 ]
 
 const mobileMenuOpen = ref(false)
-const isDarkMode = ref(true)
 
 const dashboardRoute = computed(() => {
   if (!authStore.user) return '/'
@@ -30,16 +29,6 @@ const dashboardRoute = computed(() => {
 const toggleMobile = () => (mobileMenuOpen.value = !mobileMenuOpen.value)
 const closeMobile = () => (mobileMenuOpen.value = false)
 
-const toggleDarkMode = () => {
-  isDarkMode.value = !isDarkMode.value
-  localStorage.setItem('darkMode', isDarkMode.value.toString())
-  
-  if (isDarkMode.value) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-}
 
 const handleNavClick = (target: string) => {
   const element = document.querySelector(target)
@@ -84,15 +73,7 @@ const handleGoHome = () => {
 }
 
 onMounted(() => {
-  // Load dark mode preference from localStorage
-  const savedMode = localStorage.getItem('darkMode')
-  isDarkMode.value = savedMode !== 'false'
-  
-  if (isDarkMode.value) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
+  // Keep header lightweight; remove automatic dark-mode activation.
 })
 </script>
 
@@ -149,30 +130,7 @@ onMounted(() => {
 
       <!-- Auth Buttons -->
       <div class="hidden items-center gap-3 md:flex">
-        <!-- Dark Mode Toggle -->
-        <button
-          type="button"
-          @click="toggleDarkMode"
-          class="text-slate-400 hover:text-white transition-colors"
-          :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-        >
-          <!-- Moon Icon (Dark Mode) -->
-          <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-          </svg>
-          <!-- Sun Icon (Light Mode) -->
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 2v2"></path>
-            <path d="M12 20v2"></path>
-            <path d="m4.93 4.93 1.41 1.41"></path>
-            <path d="m17.66 17.66 1.41 1.41"></path>
-            <path d="M2 12h2"></path>
-            <path d="M20 12h2"></path>
-            <path d="m6.34 17.66-1.41 1.41"></path>
-            <path d="m19.07 4.93-1.41 1.41"></path>
-          </svg>
-        </button>
+        <!-- Dark mode removed for cleaner UI -->
 
         <template v-if="authStore.user">
           <span class="text-sm text-slate-200">{{ authStore.user.name }}</span>
@@ -227,30 +185,7 @@ onMounted(() => {
 
     <!-- Mobile Menu -->
     <div v-if="mobileMenuOpen" class="md:hidden bg-slate-950 px-4 py-4 space-y-3">
-      <!-- Dark Mode Toggle (Mobile) -->
-      <button
-        type="button"
-        @click="toggleDarkMode"
-        class="flex items-center gap-2 w-full text-left text-slate-200"
-      >
-        <!-- Moon Icon (Dark Mode) -->
-        <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-        </svg>
-        <!-- Sun Icon (Light Mode) -->
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2"></path>
-          <path d="M12 20v2"></path>
-          <path d="m4.93 4.93 1.41 1.41"></path>
-          <path d="m17.66 17.66 1.41 1.41"></path>
-          <path d="M2 12h2"></path>
-          <path d="M20 12h2"></path>
-          <path d="m6.34 17.66-1.41 1.41"></path>
-          <path d="m19.07 4.93-1.41 1.41"></path>
-        </svg>
-        <span>{{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}</span>
-      </button>
+      <!-- Dark mode removed for mobile menu as well -->
 
       <!-- Show landing page sections when NOT logged in -->
       <template v-if="!authStore.user">
