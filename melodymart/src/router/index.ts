@@ -47,6 +47,11 @@ const router = createRouter({
       component: () => import('../views/PaymentReturnView.vue'),
     },
     {
+      path: '/lesson-payment/return',
+      name: 'lesson-payment-return',
+      component: () => import('../views/LessonPaymentReturnView.vue'),
+    },
+    {
       path: '/dashboard/customer',
       component: () => import('../layouts/CustomerLayout.vue'),
       meta: { requiresAuth: true, role: 'customer', requiresApproval: true },
@@ -56,15 +61,23 @@ const router = createRouter({
         { path: 'cart', name: 'customer-cart', component: () => import('../views/MyCartView.vue') },
         { path: 'orders', name: 'customer-orders', component: () => import('../views/OrdersView.vue') },
         { path: 'lessons', name: 'customer-lessons', component: () => import('../views/LessonsView.vue') },
+        { path: 'lesson-payment/:bookingId', name: 'customer-lesson-payment', component: () => import('../views/LessonPaymentView.vue') },
         { path: 'services', name: 'customer-services', component: () => import('../views/RequestedServicesView.vue') },
         { path: 'settings', name: 'customer-settings', component: () => import('../views/SettingsView.vue') },
       ],
     },
     {
       path: '/dashboard/tutor',
-      name: 'tutor-dashboard',
-      component: () => import('../views/TutorDashboard.vue'),
-      meta: { requiresAuth: true, role: 'tutor', requiresApproval: true }
+      component: () => import('../layouts/TutorLayout.vue'),
+      meta: { requiresAuth: true, role: 'tutor', requiresApproval: true },
+      children: [
+        { path: '', name: 'tutor-dashboard', component: () => import('../views/tutor/TutorOverviewView.vue') },
+        { path: 'create-lesson', name: 'tutor-create-lesson', component: () => import('../views/tutor/TutorCreateLessonView.vue') },
+        { path: 'lessons', name: 'tutor-lessons', component: () => import('../views/tutor/TutorMyLessonsView.vue') },
+        { path: 'bookings', name: 'tutor-bookings', component: () => import('../views/tutor/TutorBookingsView.vue') },
+        { path: 'earnings', name: 'tutor-earnings', component: () => import('../views/tutor/TutorEarningsView.vue') },
+        { path: 'profile', name: 'tutor-profile', component: () => import('../views/tutor/TutorProfileView.vue') },
+      ],
     },
     {
       path: '/dashboard/repair',

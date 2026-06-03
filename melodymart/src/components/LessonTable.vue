@@ -30,16 +30,26 @@
             <StatusChip :status="lesson.bookingStatus || 'Pending'" />
           </td>
           <td class="payment">
-            <span class="payment-badge">Paid</span>
+            <span class="payment-badge" :class="lesson.paymentStatus === 'Paid' ? 'badge-paid' : 'badge-pending'">
+              {{ lesson.paymentStatus === 'Paid' ? '✓ Paid' : (lesson.paymentStatus || 'Pending') }}
+            </span>
           </td>
           <td class="price">Rs {{ lesson.price }}</td>
           <td class="actions">
             <div class="action-buttons">
+              <button
+                v-if="lesson.paymentStatus !== 'Paid' && lesson.bookingStatus !== 'Cancelled' && lesson.bookingStatus !== 'Completed'"
+                class="action-btn pay-btn"
+                @click="$emit('pay-now', lesson)"
+                title="Pay Now"
+              >
+                💳
+              </button>
               <button class="action-btn details-btn" @click="$emit('view-details', lesson)" title="View Details">
                 👁️
               </button>
               <button
-                v-if="lesson.bookingStatus !== 'Completed'"
+                v-if="lesson.bookingStatus !== 'Completed' && lesson.bookingStatus !== 'Pending Payment'"
                 class="action-btn reschedule-btn"
                 @click="$emit('reschedule', lesson)"
                 title="Reschedule"
@@ -72,7 +82,7 @@ defineProps({
   }
 })
 
-defineEmits(['view-details', 'reschedule', 'cancel'])
+defineEmits(['view-details', 'reschedule', 'cancel', 'pay-now'])
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
@@ -174,13 +184,22 @@ const formatDate = (date) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
-  background-color: #d1fae5;
-  color: #065f46;
+  padding: 5px 10px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 700;
+}
+
+.badge-paid {
+  background: #d1fae5;
+  color: #065f46;
   border: 1px solid #6ee7b7;
+}
+
+.badge-pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
 }
 
 .price {
@@ -211,6 +230,18 @@ const formatDate = (date) => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+}
+
+.pay-btn {
+  background: linear-gradient(90deg, #059669, #34d399);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+}
+
+.pay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
 }
 
 .details-btn {

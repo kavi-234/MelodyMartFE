@@ -56,48 +56,48 @@ const getLevelColor = (level: string) => {
   return colors[level] || 'bg-slate-100 text-slate-700 border-slate-200'
 }
 
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import lessonService from '../services/lessonService'
+
+const router = useRouter()
 const authStore = useAuthStore()
+
+const bookingInProgress = ref<string | null>(null)
 
 const handleBookLesson = async (lessonId: string) => {
   const token = localStorage.getItem('token')
   if (!token) {
     alert('Please login to book a lesson')
-    window.location.href = '/auth'
+    router.push('/auth')
     return
   }
 
+  bookingInProgress.value = lessonId
   try {
-    const res = await fetch(`http://localhost:5000/api/lessons/${lessonId}/enroll`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
+    await lessonService.bookLesson(lessonId)
 
-    if (!res.ok) {
-      const err = await res.json()
-      alert(err.message || 'Failed to enroll in lesson')
-      return
-    }
-
-    const data = await res.json()
-    // update local UI: increment enrolledStudents count for the lesson
-    const idx = lessons.value.findIndex(l => l._id === lessonId)
-    if (idx !== -1) {
-      // push a placeholder to enrolledStudents to reflect count change
-      lessons.value[idx].enrolledStudents = lessons.value[idx].enrolledStudents || []
-      lessons.value[idx].enrolledStudents.push(authStore.user?.userId || authStore.user?._id || 'me')
-    }
-
-    // increment global count in auth store so sidebar badge updates
+    // Increment sidebar badge
     authStore.incrementMyLessonsCount()
 
-    alert('Enrolled successfully')
-  } catch (error) {
-    console.error('Failed to enroll in lesson:', error)
-    alert('Failed to enroll in lesson')
+    // Build booking object from lesson data already in memory
+    const lessonObj = lessons.value.find((l) => l._id === lessonId) || selectedLesson.value
+    const syntheticBooking = {
+      _id: lessonId,
+      bookingStatus: 'Pending Payment',
+      paymentStatus: 'Pending',
+      lesson: lessonObj
+    }
+
+    // Navigate to payment page carrying booking data — avoids needing /api/bookings/:id
+    router.push({
+      path: `/dashboard/customer/lesson-payment/${lessonId}`,
+      state: { booking: syntheticBooking }
+    })
+  } catch (err: any) {
+    alert(err.message || 'Failed to book lesson. Please try again.')
+  } finally {
+    bookingInProgress.value = null
   }
 }
 
@@ -211,9 +211,10 @@ onMounted(() => {
             </button>
             <button
               @click="handleBookLesson(lesson._id)"
-              class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all"
+              :disabled="bookingInProgress === lesson._id"
+              class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Book Lesson
+              {{ bookingInProgress === lesson._id ? 'Booking...' : 'Book Lesson' }}
             </button>
           </div>
         </div>
@@ -373,9 +374,10 @@ onMounted(() => {
 
               <button
                 @click="handleBookLesson(selectedLesson._id)"
-                class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all"
+                :disabled="bookingInProgress === selectedLesson._id"
+                class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Book This Lesson Now
+                {{ bookingInProgress === selectedLesson._id ? 'Booking...' : 'Book This Lesson Now' }}
               </button>
             </div>
           </div>

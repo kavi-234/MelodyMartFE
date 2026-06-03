@@ -26,6 +26,7 @@
       <div class="filter-controls">
         <select v-model="selectedStatus" class="filter-select">
           <option value="">All Status</option>
+          <option value="Pending Payment">Pending Payment</option>
           <option value="Pending">Pending</option>
           <option value="Confirmed">Confirmed</option>
           <option value="Completed">Completed</option>
@@ -70,6 +71,7 @@
           @view-details="handleViewDetails"
           @reschedule="handleReschedule"
           @cancel="handleCancel"
+          @pay-now="handlePayNow"
         />
       </div>
 
@@ -79,9 +81,10 @@
           v-for="lesson in filteredLessons"
           :key="lesson._id"
           :lesson="lesson"
-          @view-details="handleViewDetails"
-          @reschedule="handleReschedule"
-          @cancel="handleCancel"
+          @view-details="handleViewDetails(lesson)"
+          @reschedule="handleReschedule(lesson)"
+          @cancel="handleCancel(lesson)"
+          @pay-now="handlePayNow(lesson)"
         />
       </div>
 
@@ -338,6 +341,13 @@ const handleCancel = async (lesson) => {
   } catch (err) {
     alert('Failed to cancel lesson: ' + err.message)
   }
+}
+
+const handlePayNow = (lesson) => {
+  router.push({
+    path: `/dashboard/customer/lesson-payment/${lesson._id}`,
+    state: { booking: lesson }
+  })
 }
 
 const downloadReceipt = () => {

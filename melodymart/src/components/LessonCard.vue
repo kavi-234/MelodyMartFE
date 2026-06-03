@@ -31,7 +31,7 @@
         </div>
         <div class="detail-item">
           <span class="detail-label">💳 Payment</span>
-          <span class="detail-value payment-status">Paid</span>
+          <span class="detail-value payment-badge" :class="paymentBadgeClass">{{ paymentLabel }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">📝 Booking Date</span>
@@ -48,10 +48,13 @@
 
     <!-- Actions -->
     <div class="card-actions">
+      <button class="action-btn action-pay" @click="$emit('pay-now', lesson)" v-if="showPayNow">
+        <span>💳</span> Pay Now
+      </button>
       <button class="action-btn action-details" @click="$emit('view-details')">
         <span>👁️</span> View Details
       </button>
-      <button class="action-btn action-reschedule" @click="$emit('reschedule')" v-if="lesson.bookingStatus !== 'Completed'">
+      <button class="action-btn action-reschedule" @click="$emit('reschedule')" v-if="lesson.bookingStatus !== 'Completed' && lesson.bookingStatus !== 'Pending Payment'">
         <span>🔄</span> Reschedule
       </button>
       <button class="action-btn action-cancel" @click="$emit('cancel')" v-if="lesson.bookingStatus !== 'Completed' && lesson.bookingStatus !== 'Cancelled'">
@@ -62,16 +65,17 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import StatusChip from './StatusChip.vue'
 
-defineProps({
+const props = defineProps({
   lesson: {
     type: Object,
     required: true
   }
 })
 
-defineEmits(['view-details', 'reschedule', 'cancel'])
+defineEmits(['view-details', 'reschedule', 'cancel', 'pay-now'])
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
@@ -84,6 +88,26 @@ const formatDate = (date) => {
   } catch (e) {
     return date
   }
+}
+
+const isPaid = computed(() => props.lesson.paymentStatus === 'Paid')
+
+const showPayNow = computed(() =>
+  !isPaid.value &&
+  props.lesson.bookingStatus !== 'Cancelled' &&
+  props.lesson.bookingStatus !== 'Completed'
+)
+
+const paymentLabel = computed(() => {
+  if (isPaid.value) return '✓ Paid'
+  return props.lesson.paymentStatus || 'Pending'
+})
+
+const paymentBadgeClass = computed(() => ({
+  'badge-paid': isPaid.value,
+  'badge-pending': !isPaid.value
+}))
+</script>
 <style scoped>
 .lesson-card {
   background: #ffffff;
@@ -162,12 +186,25 @@ const formatDate = (date) => {
   color: #28104E;
 }
 
-.payment-status {
+.payment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-paid {
   color: #059669;
   background: #d1fae5;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 700;
+  border: 1px solid #6ee7b7;
+}
+
+.badge-pending {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
 }
 
 .price-section {
@@ -212,6 +249,18 @@ const formatDate = (date) => {
   justify-content: center;
   gap: 6px;
   text-transform: capitalize;
+}
+
+.action-pay {
+  background: linear-gradient(90deg, #059669, #34d399);
+  color: white;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
+  font-weight: 700;
+}
+
+.action-pay:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .action-details {
