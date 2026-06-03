@@ -1,25 +1,21 @@
 <template>
   <div class="page">
-    <div class="page-header">
-      <div><h1 class="page-title">Earnings</h1><p class="page-subtitle">Track your income from lesson bookings.</p></div>
-    </div>
+    <div class="page-header"><div><h1 class="page-title">Earnings</h1><p class="page-subtitle">Track income from completed service requests.</p></div></div>
 
     <div v-if="loading" class="loading-state"><div class="spinner"></div><p>Loading earnings...</p></div>
     <div v-else-if="error" class="error-state"><span>⚠️</span><p>{{ error }}</p><button @click="fetchEarnings" class="retry-btn">Retry</button></div>
 
     <div v-else>
-      <!-- Total Earnings Hero -->
       <div class="earnings-hero">
         <div class="hero-left">
           <div class="hero-label">Total Earnings</div>
           <div class="hero-amount">Rs {{ totalEarnings.toLocaleString() }}</div>
-          <div class="hero-sub">From {{ history.length }} paid booking{{ history.length !== 1 ? 's' : '' }}</div>
+          <div class="hero-sub">From {{ history.length }} completed job{{ history.length !== 1 ? 's' : '' }}</div>
         </div>
         <div class="hero-icon">💰</div>
       </div>
 
       <div class="two-col">
-        <!-- Monthly Breakdown -->
         <div class="card">
           <h2 class="card-title">Monthly Earnings</h2>
           <div v-if="monthly.length === 0" class="empty-inner"><p>No earnings data yet.</p></div>
@@ -34,33 +30,31 @@
           </div>
         </div>
 
-        <!-- Earnings by Lesson -->
         <div class="card">
-          <h2 class="card-title">Earnings by Lesson</h2>
-          <div v-if="byLesson.length === 0" class="empty-inner"><p>No earnings data yet.</p></div>
-          <div v-else class="by-lesson-list">
-            <div v-for="item in byLesson" :key="item.lesson?._id" class="lesson-row">
-              <div class="lesson-info">
-                <div class="lesson-name">{{ item.lesson?.title || 'Unknown' }}</div>
-                <div class="lesson-count">{{ item.count }} booking{{ item.count !== 1 ? 's' : '' }} · Rs {{ item.lesson?.price || 0 }} each</div>
+          <h2 class="card-title">Earnings by Service Type</h2>
+          <div v-if="byType.length === 0" class="empty-inner"><p>No earnings data yet.</p></div>
+          <div v-else class="type-list">
+            <div v-for="item in byType" :key="item.type" class="type-row">
+              <div class="type-info">
+                <div class="type-name">{{ item.type || 'Other' }}</div>
+                <div class="type-count">{{ item.count }} job{{ item.count !== 1 ? 's' : '' }}</div>
               </div>
-              <div class="lesson-total">Rs {{ item.total.toLocaleString() }}</div>
+              <div class="type-total">Rs {{ item.total.toLocaleString() }}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Payment History -->
       <div class="card mt-6">
-        <h2 class="card-title">Payment History</h2>
-        <div v-if="history.length === 0" class="empty-inner"><p>No payments received yet. Earnings appear here when students complete payment for your lessons.</p></div>
+        <h2 class="card-title">Earnings History</h2>
+        <div v-if="history.length === 0" class="empty-inner"><p>No completed jobs yet. Earnings appear here when you complete service requests.</p></div>
         <div v-else class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th>Student</th>
-                <th>Lesson</th>
-                <th>Payment Date</th>
+                <th>Customer</th>
+                <th>Service Type</th>
+                <th>Completed On</th>
                 <th>Amount</th>
                 <th>Status</th>
               </tr>
@@ -68,15 +62,15 @@
             <tbody>
               <tr v-for="h in history" :key="h._id" class="table-row">
                 <td>
-                  <div class="student-cell">
-                    <div class="avatar">{{ getInitials(h.student?.name) }}</div>
-                    <div><div class="sname">{{ h.student?.name || 'Unknown' }}</div><div class="semail">{{ h.student?.email || '' }}</div></div>
+                  <div class="customer-cell">
+                    <div class="avatar">{{ getInitials(h.customer?.name) }}</div>
+                    <div><div class="cname">{{ h.customer?.name || 'Unknown' }}</div><div class="cemail">{{ h.customer?.email || '' }}</div></div>
                   </div>
                 </td>
-                <td class="lesson-cell">{{ h.lesson?.title || '—' }}</td>
-                <td class="date-cell">{{ formatDate(h.paidAt) }}</td>
-                <td class="amount-cell">Rs {{ h.amount.toLocaleString() }}</td>
-                <td><span class="badge badge-green">✓ Paid</span></td>
+                <td class="type-cell">{{ h.serviceType || '—' }}</td>
+                <td class="date-cell">{{ formatDate(h.completedAt) }}</td>
+                <td class="amount-cell">Rs {{ h.serviceFee.toLocaleString() }}</td>
+                <td><span class="badge badge-green">✓ Completed</span></td>
               </tr>
             </tbody>
           </table>
@@ -93,19 +87,19 @@ const loading = ref(false)
 const error = ref('')
 const totalEarnings = ref(0)
 const monthly = ref<any[]>([])
-const byLesson = ref<any[]>([])
+const byType = ref<any[]>([])
 const history = ref<any[]>([])
 
 const fetchEarnings = async () => {
   loading.value = true; error.value = ''
   try {
     const token = localStorage.getItem('token')
-    const res = await fetch('http://localhost:5000/api/tutors/dashboard/earnings', { headers: { Authorization: `Bearer ${token}` } })
+    const res = await fetch('http://localhost:5000/api/specialists/dashboard/earnings', { headers: { Authorization: `Bearer ${token}` } })
     if (!res.ok) throw new Error('Failed to load earnings')
     const data = await res.json()
     totalEarnings.value = data.totalEarnings || 0
     monthly.value = data.monthly || []
-    byLesson.value = data.byLesson || []
+    byType.value = data.byType || []
     history.value = data.history || []
   } catch (e: any) { error.value = e.message }
   finally { loading.value = false }
@@ -131,7 +125,6 @@ onMounted(fetchEarnings)
 .loading-state p,.error-state p { color: rgba(255,255,255,0.8); font-size: 14px; }
 .retry-btn { padding: 9px 20px; background: #9754CB; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
-/* Hero */
 .earnings-hero {
   display: flex; justify-content: space-between; align-items: center;
   background: linear-gradient(135deg, #9754CB, #6237A0);
@@ -146,11 +139,10 @@ onMounted(fetchEarnings)
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .card { background: white; border: 2px solid #DEACF5; border-radius: 14px; padding: 24px; box-shadow: 0 4px 12px rgba(151,84,203,0.07); }
 .mt-6 { margin-top: 20px; }
-.card-title { font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 18px; }
+.card-title { font-size: 17px; font-weight: 700; color: #1b1030; margin: 0 0 18px; }
 
-.empty-inner { padding: 24px; text-align: center; color: rgba(255,255,255,0.55); font-size: 13px; }
+.empty-inner { padding: 24px; text-align: center; color: rgba(40,16,60,0.55); font-size: 13px; }
 
-/* Monthly */
 .monthly-list { display: flex; flex-direction: column; gap: 12px; }
 .monthly-row { display: flex; align-items: center; gap: 12px; }
 .month-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); min-width: 70px; }
@@ -158,14 +150,12 @@ onMounted(fetchEarnings)
 .month-bar { height: 100%; background: linear-gradient(90deg,#9754CB,#DEACF5); border-radius: 4px; transition: width 0.6s ease; }
 .month-amount { font-size: 13px; font-weight: 700; color: #9754CB; min-width: 80px; text-align: right; }
 
-/* By lesson */
-.by-lesson-list { display: flex; flex-direction: column; gap: 12px; }
-.lesson-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: rgba(151,84,203,0.04); border-radius: 10px; border: 1px solid rgba(151,84,203,0.1); }
-.lesson-name { font-size: 13px; font-weight: 700; color: #ffffff; }
-.lesson-count { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
-.lesson-total { font-size: 15px; font-weight: 800; color: #9754CB; }
+.type-list { display: flex; flex-direction: column; gap: 12px; }
+.type-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: rgba(151,84,203,0.04); border-radius: 10px; border: 1px solid rgba(151,84,203,0.1); }
+.type-name { font-size: 13px; font-weight: 700; color: #1b1030; }
+.type-count { font-size: 11px; color: rgba(40,16,60,0.55); margin-top: 2px; }
+.type-total { font-size: 15px; font-weight: 800; color: #9754CB; }
 
-/* Table */
 .table-wrap { overflow-x: auto; border-radius: 10px; border: 1.5px solid #DEACF5; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table thead { background: linear-gradient(90deg,#9754CB,#DEACF5); }
@@ -173,12 +163,12 @@ onMounted(fetchEarnings)
 .table-row { border-bottom: 1px solid #E5D9F0; }
 .table-row:hover { background: #F8F4FF; }
 .table td { padding: 12px 14px; color: #28104E; vertical-align: middle; }
-.student-cell { display: flex; align-items: center; gap: 10px; }
+.customer-cell { display: flex; align-items: center; gap: 10px; }
 .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#9754CB,#DEACF5); color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.sname { font-weight: 700; font-size: 13px; color: #ffffff; }
-.semail { font-size: 11px; color: rgba(255,255,255,0.55); }
-.lesson-cell { font-weight: 600; }
-.date-cell { font-size: 12px; color: rgba(255,255,255,0.65); white-space: nowrap; }
+.cname { font-weight: 700; font-size: 13px; color: #1b1030; }
+.cemail { font-size: 11px; color: rgba(40,16,60,0.55); }
+.type-cell { font-weight: 600; }
+.date-cell { font-size: 12px; color: rgba(40,16,60,0.65); white-space: nowrap; }
 .amount-cell { font-weight: 800; color: #9754CB; font-size: 14px; }
 .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 .badge-green { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }

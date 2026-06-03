@@ -157,8 +157,8 @@ const handleSubmit = async () => {
 <style scoped>
 .page { max-width: 860px; }
 .page-header { margin-bottom: 24px; }
-.page-title { font-size: 30px; font-weight: 800; color: #1b1030; margin: 0 0 4px; letter-spacing: -0.5px; }
-.page-subtitle { font-size: 15px; color: rgba(40,16,60,0.6); margin: 0; }
+.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }
+.page-subtitle { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
 
 .form-card { background: white; border: 2px solid #DEACF5; border-radius: 16px; padding: 32px; box-shadow: 0 4px 16px rgba(151,84,203,0.08); }
 
@@ -171,7 +171,7 @@ const handleSubmit = async () => {
 .section-title { font-size: 16px; font-weight: 700; color: #6237A0; margin: 0 0 4px; padding-bottom: 10px; border-bottom: 2px solid rgba(151,84,203,0.12); }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
-.label { font-size: 13px; font-weight: 600; color: #1b1030; }
+.label { font-size: 13px; font-weight: 600; color: #ffffff; }
 .req { color: #e53e3e; }
 .input {
   padding: 10px 14px; border: 1.5px solid rgba(151,84,203,0.2); border-radius: 8px;
@@ -180,7 +180,7 @@ const handleSubmit = async () => {
 }
 .input:focus { border-color: #9754CB; box-shadow: 0 0 0 3px rgba(151,84,203,0.1); }
 .textarea { resize: vertical; min-height: 100px; }
-select.input { color: #1b1030; }
+select.input { color: #ffffff; }
 
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .mt-3 { margin-top: 8px; }
@@ -196,7 +196,7 @@ select.input { color: #1b1030; }
 .chip-active { background: #9754CB; color: white; border-color: #9754CB; }
 
 .radio-group { display: flex; gap: 24px; }
-.radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #1b1030; cursor: pointer; }
+.radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #ffffff; cursor: pointer; }
 .radio { accent-color: #9754CB; width: 16px; height: 16px; }
 
 .submit-btn {

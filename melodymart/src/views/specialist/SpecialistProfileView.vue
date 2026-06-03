@@ -5,11 +5,9 @@
     </div>
 
     <div class="two-col">
-      <!-- Profile Form -->
       <div class="card">
         <h2 class="card-title">Profile Information</h2>
 
-        <!-- Avatar -->
         <div class="avatar-section">
           <div class="avatar-wrap">
             <img v-if="avatarPreview" :src="avatarPreview" class="avatar-img" alt="avatar" />
@@ -36,8 +34,12 @@
             <span class="field-hint">Email cannot be changed.</span>
           </div>
           <div class="field">
+            <label class="label">Phone</label>
+            <input v-model="form.phone" type="tel" class="input" placeholder="Your phone number" />
+          </div>
+          <div class="field">
             <label class="label">Specialization</label>
-            <input v-model="form.specialization" type="text" class="input" placeholder="e.g., Piano, Guitar, Violin" />
+            <input v-model="form.specialization" type="text" class="input" placeholder="e.g., Guitar Repair, Piano Tuning" />
           </div>
           <div class="grid-2">
             <div class="field">
@@ -50,8 +52,16 @@
             </div>
           </div>
           <div class="field">
+            <label class="label">Certifications</label>
+            <textarea v-model="form.certifications" rows="2" class="input textarea" placeholder="List any certifications (e.g., Certified Piano Technician)..."></textarea>
+          </div>
+          <div class="field">
+            <label class="label">Service Types</label>
+            <textarea v-model="form.serviceTypes" rows="2" class="input textarea" placeholder="List services you offer (e.g., Repair, Maintenance, Tuning)..."></textarea>
+          </div>
+          <div class="field">
             <label class="label">Bio / About Me</label>
-            <textarea v-model="form.bio" rows="4" class="input textarea" placeholder="Tell students about your teaching approach, background, and style..."></textarea>
+            <textarea v-model="form.bio" rows="4" class="input textarea" placeholder="Tell customers about your expertise, experience, and approach..."></textarea>
           </div>
           <button type="submit" :disabled="profileSaving" class="submit-btn">
             {{ profileSaving ? 'Saving...' : 'Save Changes' }}
@@ -59,9 +69,7 @@
         </form>
       </div>
 
-      <!-- Right Column -->
       <div class="right-col">
-        <!-- Verification Status -->
         <div class="card status-card">
           <h2 class="card-title">Account Status</h2>
           <div class="status-row">
@@ -69,13 +77,12 @@
             <span class="status-text">{{ statusDescription }}</span>
           </div>
           <div class="status-info">
-            <div class="info-row"><span class="info-label">Role</span><span class="info-val">Tutor</span></div>
+            <div class="info-row"><span class="info-label">Role</span><span class="info-val">Repair Specialist</span></div>
             <div class="info-row"><span class="info-label">Auth Provider</span><span class="info-val capitalize">{{ authStore.user?.authProvider || 'local' }}</span></div>
             <div class="info-row"><span class="info-label">Member Since</span><span class="info-val">{{ formatDate(authStore.user?.createdAt) }}</span></div>
           </div>
         </div>
 
-        <!-- Change Password (local accounts only) -->
         <div v-if="authStore.user?.authProvider === 'local'" class="card password-card">
           <h2 class="card-title">Change Password</h2>
           <div v-if="pwSuccess" class="alert alert-success">✓ {{ pwSuccess }}</div>
@@ -117,7 +124,7 @@ import { useAuthStore } from '../../stores/auth'
 
 const authStore = useAuthStore()
 
-const form = reactive({ name: '', specialization: '', experience: 0, hourlyRate: 0, bio: '' })
+const form = reactive({ name: '', phone: '', specialization: '', experience: 0, hourlyRate: 0, certifications: '', serviceTypes: '', bio: '' })
 const pw = reactive({ current: '', newPw: '', confirm: '' })
 const avatarFile = ref<File | null>(null)
 const avatarPreview = ref<string>('')
@@ -142,7 +149,7 @@ const statusChipClass = computed(() => {
 })
 const statusDescription = computed(() => {
   const s = authStore.user?.verificationStatus
-  if (s === 'APPROVED') return 'Your account is verified and visible to students.'
+  if (s === 'APPROVED') return 'Your account is verified and visible to customers.'
   if (s === 'REJECTED') return 'Your verification was rejected. Contact support.'
   return 'Your account is pending admin approval.'
 })
@@ -166,6 +173,7 @@ const saveProfile = async () => {
     const token = localStorage.getItem('token')
     const fd = new FormData()
     fd.append('name', form.name)
+    fd.append('phone', form.phone)
     fd.append('specialization', form.specialization)
     fd.append('experience', String(form.experience))
     fd.append('hourlyRate', String(form.hourlyRate))
@@ -212,9 +220,12 @@ onMounted(() => {
   const u = authStore.user
   if (u) {
     form.name = u.name || ''
+    form.phone = u.phone || ''
     form.specialization = u.specialization || ''
     form.experience = u.experience || 0
     form.hourlyRate = u.hourlyRate || 0
+    form.certifications = u.certifications || ''
+    form.serviceTypes = u.serviceTypes || ''
     form.bio = u.bio || ''
     avatarPreview.value = u.avatar || ''
   }
@@ -224,7 +235,7 @@ onMounted(() => {
 <style scoped>
 .page { max-width: 1100px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }
+.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }; margin: 0 0 4px; letter-spacing: -0.5px; }
 .page-subtitle { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
 
 .two-col { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; align-items: start; }
@@ -232,7 +243,6 @@ onMounted(() => {
 .card { background: white; border: 2px solid #DEACF5; border-radius: 14px; padding: 24px; box-shadow: 0 4px 12px rgba(151,84,203,0.07); }
 .card-title { font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 18px; }
 
-/* Avatar */
 .avatar-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; }
 .avatar-wrap { position: relative; margin-bottom: 8px; }
 .avatar-img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; border: 3px solid #DEACF5; }
@@ -252,7 +262,7 @@ onMounted(() => {
 .input { padding: 10px 14px; border: 1.5px solid rgba(151,84,203,0.2); border-radius: 8px; font-size: 14px; color: #1b1030; background: white; outline: none; width: 100%; transition: border-color 0.2s; }
 .input:focus { border-color: #9754CB; box-shadow: 0 0 0 3px rgba(151,84,203,0.1); }
 .input-readonly { background: rgba(151,84,203,0.04); color: rgba(255,255,255,0.55); cursor: not-allowed; }
-.textarea { resize: vertical; min-height: 100px; }
+.textarea { color: #1b1030; resize: vertical; min-height: 80px; }
 .field-hint { font-size: 11px; color: rgba(255,255,255,0.5); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
@@ -260,7 +270,6 @@ onMounted(() => {
 .submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(151,84,203,0.3); }
 .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-/* Status card */
 .status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .status-chip { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
 .chip-green { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }

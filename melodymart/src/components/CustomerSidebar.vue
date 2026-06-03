@@ -99,6 +99,14 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
+:root {
+  --p-900: #28104E;
+  --p-700: #6237A0;
+  --p-500: #9754CB;
+  --p-300: #DEACF5;
+  --p-50: #FBF7FF;
+}
+
 .customer-sidebar {
   position: fixed;
   left: 0;

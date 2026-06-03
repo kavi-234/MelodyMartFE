@@ -167,28 +167,28 @@ onMounted(fetchLessons)
 <style scoped>
 .page { max-width: 1100px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.page-title { font-size: 30px; font-weight: 800; color: #1b1030; margin: 0 0 4px; letter-spacing: -0.5px; }
-.page-subtitle { font-size: 15px; color: rgba(40,16,60,0.6); margin: 0; }
+.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }
+.page-subtitle { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
 .create-btn { padding: 10px 20px; background: linear-gradient(90deg,#9754CB,#DEACF5); color: white; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; }
 
 .loading-state,.error-state { display: flex; flex-direction: column; align-items: center; padding: 60px 20px; gap: 12px; text-align: center; }
 .spinner { width: 44px; height: 44px; border: 4px solid rgba(151,84,203,0.1); border-top-color: #9754CB; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-state p,.error-state p { color: rgba(40,16,60,0.65); font-size: 14px; }
+.loading-state p,.error-state p { color: rgba(255,255,255,0.8); font-size: 14px; }
 .retry-btn { padding: 9px 20px; background: #9754CB; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 80px 20px; gap: 12px; text-align: center; }
 .empty-icon { font-size: 52px; }
-.empty-state h3 { font-size: 20px; font-weight: 700; color: #1b1030; margin: 0; }
-.empty-state p { color: rgba(40,16,60,0.6); margin: 0; font-size: 14px; }
+.empty-state h3 { font-size: 20px; font-weight: 700; color: #ffffff; margin: 0; }
+.empty-state p { color: rgba(255,255,255,0.7); margin: 0; font-size: 14px; }
 
 .lessons-list { display: flex; flex-direction: column; gap: 16px; }
 .lesson-card { background: white; border: 2px solid #DEACF5; border-radius: 14px; padding: 22px; box-shadow: 0 4px 12px rgba(151,84,203,0.07); transition: border-color 0.2s; }
 .lesson-card:hover { border-color: #9754CB; }
 
 .lesson-header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
-.lesson-title { font-size: 18px; font-weight: 700; color: #1b1030; margin: 0 0 6px; }
-.lesson-desc { font-size: 13px; color: rgba(40,16,60,0.6); margin: 0 0 10px; line-height: 1.5; }
+.lesson-title { font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 6px; }
+.lesson-desc { font-size: 13px; color: rgba(255,255,255,0.7); margin: 0 0 10px; line-height: 1.5; }
 .lesson-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 .tag-instrument { background: rgba(151,84,203,0.08); color: #6237A0; border: 1px solid rgba(151,84,203,0.2); }
@@ -207,11 +207,11 @@ onMounted(fetchLessons)
 .lesson-stats { display: flex; gap: 24px; flex-wrap: wrap; padding: 14px 0; border-top: 1px solid rgba(151,84,203,0.08); border-bottom: 1px solid rgba(151,84,203,0.08); }
 .stat { display: flex; flex-direction: column; gap: 2px; }
 .stat-label { font-size: 10px; font-weight: 700; color: #9754CB; text-transform: uppercase; }
-.stat-val { font-size: 15px; font-weight: 700; color: #1b1030; }
+.stat-val { font-size: 15px; font-weight: 700; color: #ffffff; }
 .stat-val.price { color: #9754CB; }
 
 .lesson-days { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
-.days-label { font-size: 11px; font-weight: 700; color: rgba(40,16,60,0.5); text-transform: uppercase; }
+.days-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 .day-chip { padding: 3px 10px; background: rgba(151,84,203,0.08); color: #6237A0; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid rgba(151,84,203,0.2); }
 
 /* Edit form */
@@ -220,7 +220,7 @@ onMounted(fetchLessons)
 .edit-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .edit-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 5px; }
-.label { font-size: 12px; font-weight: 600; color: #1b1030; }
+.label { font-size: 12px; font-weight: 600; color: #ffffff; }
 .input { padding: 9px 12px; border: 1.5px solid rgba(151,84,203,0.2); border-radius: 8px; font-size: 13px; color: #1b1030; background: white; outline: none; width: 100%; }
 .input:focus { border-color: #9754CB; }
 .textarea { resize: vertical; min-height: 80px; }
@@ -229,7 +229,7 @@ onMounted(fetchLessons)
 .chip:hover { border-color: #9754CB; }
 .chip-active { background: #9754CB; color: white; border-color: #9754CB; }
 .toggle-row { display: flex; gap: 24px; flex-wrap: wrap; }
-.toggle-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #1b1030; cursor: pointer; }
+.toggle-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #ffffff; cursor: pointer; }
 .toggle-cb { accent-color: #9754CB; width: 15px; height: 15px; }
 .edit-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 4px; }
 .btn-cancel { padding: 9px 20px; background: rgba(151,84,203,0.08); color: #6237A0; border: 1.5px solid rgba(151,84,203,0.2); border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }

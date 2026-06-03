@@ -183,8 +183,8 @@ onMounted(fetchBookings)
 <style scoped>
 .page { max-width: 1300px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.page-title { font-size: 30px; font-weight: 800; color: #1b1030; margin: 0 0 4px; letter-spacing: -0.5px; }
-.page-subtitle { font-size: 15px; color: rgba(40,16,60,0.6); margin: 0; }
+.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }
+.page-subtitle { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
 
 .filter-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
 .search-box { flex: 1; min-width: 200px; position: relative; }
@@ -197,9 +197,9 @@ onMounted(fetchBookings)
 .loading-state,.error-state,.empty-state { display: flex; flex-direction: column; align-items: center; padding: 60px 20px; gap: 12px; text-align: center; }
 .spinner { width: 44px; height: 44px; border: 4px solid rgba(151,84,203,0.1); border-top-color: #9754CB; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-state p,.error-state p,.empty-state p { color: rgba(40,16,60,0.65); font-size: 14px; margin: 0; }
+.loading-state p,.error-state p,.empty-state p { color: rgba(255,255,255,0.65); font-size: 14px; margin: 0; }
 .empty-icon { font-size: 48px; }
-.empty-state h3 { font-size: 20px; font-weight: 700; color: #1b1030; margin: 0; }
+.empty-state h3 { font-size: 20px; font-weight: 700; color: #ffffff; margin: 0; }
 .retry-btn { padding: 9px 20px; background: #9754CB; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
 .table-wrap { overflow-x: auto; border-radius: 12px; border: 2px solid #9754CB; background: white; }
@@ -213,11 +213,11 @@ onMounted(fetchBookings)
 .student-cell { display: flex; align-items: center; gap: 10px; }
 .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#9754CB,#DEACF5); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .avatar.lg { width: 48px; height: 48px; font-size: 16px; }
-.student-name { font-weight: 700; color: #1b1030; font-size: 13px; }
+.student-name { font-weight: 700; color: #ffffff; font-size: 13px; }
 .student-name.lg { font-size: 16px; }
-.student-email { font-size: 11px; color: rgba(40,16,60,0.55); }
+.student-email { font-size: 11px; color: rgba(255,255,255,0.55); }
 .lesson-cell { font-weight: 600; }
-.date-cell,.days-cell { font-size: 12px; color: rgba(40,16,60,0.65); white-space: nowrap; }
+.date-cell,.days-cell { font-size: 12px; color: rgba(255,255,255,0.65); white-space: nowrap; }
 .fee-cell { font-weight: 700; color: #9754CB; }
 
 .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
@@ -234,26 +234,26 @@ onMounted(fetchBookings)
 .card-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .cd-item { display: flex; flex-direction: column; gap: 3px; }
 .cd-label { font-size: 10px; font-weight: 700; color: #9754CB; text-transform: uppercase; }
-.cd-value { font-size: 12px; font-weight: 600; color: #1b1030; }
+.cd-value { font-size: 12px; font-weight: 600; color: #ffffff; }
 .cd-value.fee { color: #9754CB; }
 .card-bottom { display: flex; justify-content: space-between; align-items: center; }
 .btn-view { padding: 7px 14px; background: linear-gradient(90deg,#9754CB,#DEACF5); color: white; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; }
 
-.results-footer { text-align: center; color: rgba(40,16,60,0.6); font-size: 13px; padding: 16px; }
+.results-footer { text-align: center; color: rgba(255,255,255,0.7); font-size: 13px; padding: 16px; }
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
 .modal-box { background: white; border-radius: 16px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid rgba(151,84,203,0.1); }
-.modal-header h2 { margin: 0; font-size: 18px; font-weight: 700; color: #1b1030; }
-.modal-close { background: none; border: none; font-size: 16px; cursor: pointer; color: rgba(40,16,60,0.5); padding: 4px 8px; border-radius: 6px; }
+.modal-header h2 { margin: 0; font-size: 18px; font-weight: 700; color: #ffffff; }
+.modal-close { background: none; border: none; font-size: 16px; cursor: pointer; color: rgba(255,255,255,0.5); padding: 4px 8px; border-radius: 6px; }
 .modal-close:hover { background: rgba(151,84,203,0.08); }
 .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
 .detail-student { display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid rgba(151,84,203,0.1); }
 .detail-grid { display: flex; flex-direction: column; gap: 8px; }
 .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: rgba(151,84,203,0.03); border-radius: 8px; }
-.dk { font-size: 12px; font-weight: 600; color: rgba(40,16,60,0.55); }
-.dv { font-size: 13px; font-weight: 700; color: #1b1030; }
+.dk { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); }
+.dv { font-size: 13px; font-weight: 700; color: #ffffff; }
 .dv.fee { color: #9754CB; }
 .modal-footer { padding: 16px 24px; border-top: 1px solid rgba(151,84,203,0.1); display: flex; justify-content: flex-end; }
 .btn-close { padding: 9px 20px; background: rgba(151,84,203,0.08); color: #6237A0; border: 1px solid rgba(151,84,203,0.2); border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }

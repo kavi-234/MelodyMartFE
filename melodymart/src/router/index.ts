@@ -80,16 +80,26 @@ const router = createRouter({
       ],
     },
     {
-      path: '/dashboard/repair',
-      name: 'repair-dashboard',
-      component: () => import('../views/RepairDashboard.vue'),
-      meta: { requiresAuth: true, role: 'repair_specialist', requiresApproval: true }
+      path: '/dashboard/specialist',
+      component: () => import('../layouts/SpecialistLayout.vue'),
+      meta: { requiresAuth: true, role: 'repair_specialist', requiresApproval: true },
+      children: [
+        { path: '', name: 'specialist-dashboard', component: () => import('../views/specialist/SpecialistOverviewView.vue') },
+        { path: 'requests', name: 'specialist-requests', component: () => import('../views/specialist/SpecialistServiceRequestsView.vue') },
+        { path: 'earnings', name: 'specialist-earnings', component: () => import('../views/specialist/SpecialistEarningsView.vue') },
+        { path: 'profile', name: 'specialist-profile', component: () => import('../views/specialist/SpecialistProfileView.vue') },
+      ],
     },
     {
       path: '/dashboard/admin',
-      name: 'admin-dashboard',
-      component: () => import('../views/AdminDashboard.vue'),
-      meta: { requiresAuth: true, role: 'admin' }
+      component: () => import('../layouts/AdminLayout.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+      children: [
+        { path: '', name: 'admin-dashboard', component: () => import('../views/admin/AdminOverviewView.vue') },
+        { path: 'users', name: 'admin-users', component: () => import('../views/admin/AdminUsersView.vue') },
+        { path: 'orders', name: 'admin-orders', component: () => import('../views/admin/AdminOrdersView.vue') },
+        { path: 'instruments', name: 'admin-instruments', component: () => import('../views/admin/AdminInstrumentsView.vue') },
+      ],
     },
     {
       path: '/settings',
@@ -138,10 +148,11 @@ router.beforeEach((to, from, next) => {
         alert('Your account is pending admin approval. Please wait for approval to access this page.')
         return next('/')
       }
-      
+
       // Check if user has approved status
-      if ((authStore.user.role === 'tutor' || authStore.user.role === 'repair_specialist') && 
+      if ((authStore.user.role === 'tutor' || authStore.user.role === 'repair_specialist') &&
           !authStore.isApproved && to.name !== 'home') {
+        alert('Your account has not been approved yet. Please contact support.')
         return next('/')
       }
     }

@@ -20,7 +20,7 @@ const dashboardRoute = computed(() => {
   const roleMap: Record<string, string> = {
     'customer': '/dashboard/customer',
     'tutor': '/dashboard/tutor',
-    'repair_specialist': '/dashboard/repair',
+    'repair_specialist': '/dashboard/specialist',
     'admin': '/dashboard/admin'
   }
   return roleMap[authStore.user.role] || '/'

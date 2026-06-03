@@ -1,5 +1,5 @@
 <template>
-  <aside :class="['tutor-sidebar', { open: isOpen, collapsed: collapsed }]">
+  <aside :class="['specialist-sidebar', { open: isOpen, collapsed: collapsed }]">
     <div class="sidebar-inner">
 
       <nav class="menu">
@@ -21,7 +21,7 @@
       <div class="profile bottom-profile">
         <img :src="avatarUrl" alt="avatar" class="avatar" />
         <div class="profile-info">
-          <div class="name">{{ user?.name || 'Tutor' }}</div>
+          <div class="name">{{ user?.name || 'Specialist' }}</div>
           <div class="email">{{ user?.email || '' }}</div>
         </div>
       </div>
@@ -62,44 +62,34 @@ const avatarUrl = computed(() => authStore.user?.avatar || '/assets/placeholders
 const items = [
   {
     label: 'Dashboard',
-    path: '/dashboard/tutor',
+    path: '/dashboard/specialist',
     exact: true,
     icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.707a1 1 0 00-1.414 0L1 9v8a1 1 0 001 1h5a1 1 0 001-1v-5h2v5a1 1 0 001 1h5a1 1 0 001-1V9l-8.293-7.293z"/></svg>`,
   },
   {
-    label: 'Create Lesson',
-    path: '/dashboard/tutor/create-lesson',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
-  },
-  {
-    label: 'My Lessons',
-    path: '/dashboard/tutor/lessons',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
-  },
-  {
-    label: 'Lesson Bookings',
-    path: '/dashboard/tutor/bookings',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    label: 'Service Requests',
+    path: '/dashboard/specialist/requests',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>`,
   },
   {
     label: 'Earnings',
-    path: '/dashboard/tutor/earnings',
+    path: '/dashboard/specialist/earnings',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
   },
   {
     label: 'Profile Settings',
-    path: '/dashboard/tutor/profile',
+    path: '/dashboard/specialist/profile',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
   },
 ]
 
 const isActive = (path) => {
-  if (path === '/dashboard/tutor') return route.path === '/dashboard/tutor'
+  if (path === '/dashboard/specialist') return route.path === '/dashboard/specialist'
   return route.path.startsWith(path)
 }
 
 const onMenuClick = (item) => {
-  if (item.path === '/dashboard/tutor') emits('compress')
+  if (item.path === '/dashboard/specialist') emits('compress')
   else emits('expand')
   closeOnMobile()
 }
@@ -119,7 +109,7 @@ const handleLogout = () => {
   --p-50: #FBF7FF;
 }
 
-.tutor-sidebar {
+.specialist-sidebar {
   position: fixed;
   left: 0; top: 0;
   height: 100vh; width: 250px;
@@ -130,12 +120,12 @@ const handleLogout = () => {
   transition: transform 0.28s ease, width 0.2s ease;
   border-right: 1px solid rgba(167,139,250,0.06);
 }
-.tutor-sidebar.collapsed {
+.specialist-sidebar.collapsed {
   width: 72px;
   background: linear-gradient(180deg, rgba(98,55,160,0.06), rgba(40,16,60,0.04));
   backdrop-filter: blur(4px);
 }
-.tutor-sidebar.open { transform: translateX(0); }
+.specialist-sidebar.open { transform: translateX(0); }
 
 .sidebar-inner {
   display: flex; flex-direction: column; height: 100%;
@@ -161,7 +151,7 @@ const handleLogout = () => {
   box-shadow: inset 4px 0 0 var(--p-500);
 }
 .menu-item .icon { display: inline-flex; width: 20px; height: 20px; flex-shrink: 0; }
-.tutor-sidebar.collapsed .label { display: none; }
+.specialist-sidebar.collapsed .label { display: none; }
 
 .spacer { flex: 1 1 auto; }
 
@@ -176,10 +166,10 @@ const handleLogout = () => {
   border: 3px solid rgba(255,255,255,0.85);
   box-shadow: 0 6px 18px rgba(98,55,160,0.12);
 }
-.tutor-sidebar.collapsed .avatar { width: 40px; height: 40px; }
+.specialist-sidebar.collapsed .avatar { width: 40px; height: 40px; }
 .profile-info .name { font-weight: 700; color: var(--p-900); font-size: 14px; }
 .profile-info .email { font-size: 11px; color: rgba(40,16,60,0.65); }
-.tutor-sidebar.collapsed .profile-info { display: none; }
+.specialist-sidebar.collapsed .profile-info { display: none; }
 
 .logout {
   width: 100%; padding: 10px 12px;
@@ -202,7 +192,7 @@ const handleLogout = () => {
 }
 
 @media (min-width: 768px) {
-  .tutor-sidebar { transform: translateX(0); }
+  .specialist-sidebar { transform: translateX(0); }
   .mobile-toggle { display: none; }
 }
 </style>
