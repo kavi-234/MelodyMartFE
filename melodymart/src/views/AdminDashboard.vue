@@ -129,18 +129,18 @@ onMounted(() => {
         <!-- Navigation Tabs -->
         <div class="mt-6 flex gap-2">
           <button @click="activeTab = 'users'"
-            :class="activeTab === 'users' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'"
-            class="rounded-lg px-4 py-2 text-sm font-medium transition">
+            :class="activeTab === 'users' ? 'ad-tab-active' : 'ad-tab-inactive'"
+            class="ad-tab">
             User Verifications
           </button>
           <button @click="activeTab = 'add-instrument'"
-            :class="activeTab === 'add-instrument' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'"
-            class="rounded-lg px-4 py-2 text-sm font-medium transition">
+            :class="activeTab === 'add-instrument' ? 'ad-tab-active' : 'ad-tab-inactive'"
+            class="ad-tab">
             Add Instrument
           </button>
           <button @click="activeTab = 'instruments'"
-            :class="activeTab === 'instruments' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'"
-            class="rounded-lg px-4 py-2 text-sm font-medium transition">
+            :class="activeTab === 'instruments' ? 'ad-tab-active' : 'ad-tab-inactive'"
+            class="ad-tab">
             View Instruments
           </button>
         </div>
@@ -153,8 +153,7 @@ onMounted(() => {
       <div v-if="activeTab === 'users'">
         <div class="mb-6 flex items-center justify-between">
           <p class="text-sm text-slate-400">Manage pending user verifications</p>
-          <button @click="fetchPendingUsers" :disabled="isLoading"
-            class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-500 disabled:opacity-50">
+          <button @click="fetchPendingUsers" :disabled="isLoading" class="ad-refresh-btn">
             {{ isLoading ? 'Loading...' : 'Refresh' }}
           </button>
         </div>
@@ -165,7 +164,7 @@ onMounted(() => {
 
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center py-12">
-        <div class="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+        <div class="ad-spinner"></div>
       </div>
 
       <!-- Empty State -->
@@ -193,9 +192,7 @@ onMounted(() => {
                     <h3 class="text-xl font-semibold text-white">{{ user.name }}</h3>
                     <p class="mt-1 text-sm text-slate-400">{{ user.email }}</p>
                   </div>
-                  <span class="inline-flex items-center rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-400">
-                    {{ getRoleDisplay(user.role) }}
-                  </span>
+                  <span class="ad-role-badge">{{ getRoleDisplay(user.role) }}</span>
                 </div>
                 <p class="mt-2 text-xs text-slate-500">Applied on {{ formatDate(user.createdAt) }}</p>
               </div>
@@ -322,3 +319,15 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.ad-tab { border-radius: 0.5rem; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; transition: all 0.2s; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.ad-tab-active { background: linear-gradient(135deg, var(--mm-coral), #C85048); color: var(--mm-ink); }
+.ad-tab-inactive { background: transparent; color: var(--mm-stone); }
+.ad-tab-inactive:hover { color: var(--mm-ivory); }
+.ad-refresh-btn { border-radius: 0.5rem; background: linear-gradient(135deg, var(--mm-coral), #C85048); padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; color: var(--mm-ink); border: none; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.ad-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ad-spinner { width: 48px; height: 48px; border: 3px solid var(--mm-warm-line); border-top-color: var(--mm-coral); border-radius: 50%; animation: ad-spin 1s linear infinite; }
+@keyframes ad-spin { to { transform: rotate(360deg); } }
+.ad-role-badge { display: inline-flex; align-items: center; border-radius: 2rem; background: rgba(224,112,96,0.1); padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; color: var(--mm-coral); border: 1px solid rgba(224,112,96,0.2); font-family: 'DM Sans', sans-serif; }
+</style>

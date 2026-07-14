@@ -6,10 +6,7 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Tab state
 const activeTab = ref<'google' | 'email'>('google')
-
-// Email auth state
 const isLogin = ref(true)
 const email = ref('')
 const password = ref('')
@@ -22,325 +19,143 @@ const isLoading = ref(false)
 const toggleMode = () => {
   isLogin.value = !isLogin.value
   errorMessage.value = ''
-  email.value = ''
-  password.value = ''
-  name.value = ''
-  role.value = 'customer'
-  document.value = null
+  email.value = ''; password.value = ''; name.value = ''; role.value = 'customer'; document.value = null
 }
+const switchTab = (tab: 'google' | 'email') => { activeTab.value = tab; errorMessage.value = ''; authStore.error = null }
 
-const switchTab = (tab: 'google' | 'email') => {
-  activeTab.value = tab
-  errorMessage.value = ''
-  authStore.error = null
-}
-
-// Google OAuth
 const initiateGoogleLogin = () => {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const redirectUri = window.location.origin + '/auth'
-  
-  console.log('Redirect URI being used:', redirectUri)
-  console.log('Make sure this exact URI is added to Google Cloud Console')
-  
   const scope = 'openid profile email'
-  const responseType = 'id_token'
   const nonce = Math.random().toString(36).substring(7)
-  
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${clientId}&` +
-    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-    `response_type=${responseType}&` +
-    `scope=${encodeURIComponent(scope)}&` +
-    `nonce=${nonce}&` +
-    `prompt=select_account`
-  
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=id_token&scope=${encodeURIComponent(scope)}&nonce=${nonce}&prompt=select_account`
   window.location.href = authUrl
 }
 
 const handleGoogleCallback = async () => {
   const hash = window.location.hash
   if (hash && hash.includes('id_token=')) {
-    const params = new URLSearchParams(hash.substring(1))
-    const idToken = params.get('id_token')
-    
-    if (idToken) {
-      isLoading.value = true
-      const result = await authStore.googleLogin(idToken)
-      
-      // Clear hash from URL
-      window.location.hash = ''
-      
-      if (result.success) {
-        // Navigate based on user status
-        if (result.user.verificationStatus === 'PENDING_APPROVAL') {
-          // Show pending approval message
-          errorMessage.value = 'Your account is pending admin approval. You will be able to access your dashboard once approved.'
-          authStore.logout()
-        } else if (result.user.verificationStatus === 'REJECTED') {
-          errorMessage.value = 'Your account has been rejected. Please contact support.'
-          authStore.logout()
-        } else if (!result.user.profileCompleted || result.user.profileCompleted === false) {
-          // All users who haven't completed profile should choose their role
-          router.push('/complete-profile')
-        } else {
-          // Navigate to role-based dashboard
-          redirectByRole()
-        }
-      } else {
-        errorMessage.value = result.error || 'Google login failed'
+    try {
+      const params = new URLSearchParams(hash.substring(1))
+      const idToken = params.get('id_token')
+      if (idToken) {
+        isLoading.value = true
+        window.history.replaceState({}, '', window.location.pathname)
+        const result = await authStore.googleLogin(idToken)
+        if (result.success) {
+          if (result.user.verificationStatus === 'PENDING_APPROVAL') { errorMessage.value = 'Your account is pending admin approval.'; authStore.logout() }
+          else if (result.user.verificationStatus === 'REJECTED') { errorMessage.value = 'Your account has been rejected. Please contact support.'; authStore.logout() }
+          else if (!result.user.profileCompleted) { router.push('/complete-profile') }
+          else { redirectByRole() }
+        } else { errorMessage.value = result.error || 'Google login failed' }
+        isLoading.value = false
       }
-      isLoading.value = false
-    }
+    } catch (err) { errorMessage.value = 'Error processing login. Please try again.'; isLoading.value = false }
   }
 }
 
-// Email/Password Auth
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
-  if (target.files && target.files.length > 0 && target.files[0]) {
-    document.value = target.files[0]
-  }
+  if (target.files && target.files[0]) document.value = target.files[0]
 }
 
 const handleEmailLogin = async () => {
-  if (!email.value || !password.value) {
-    errorMessage.value = 'Email and password are required'
-    return
-  }
-
-  isLoading.value = true
-  errorMessage.value = ''
-
+  if (!email.value || !password.value) { errorMessage.value = 'Email and password are required'; return }
+  isLoading.value = true; errorMessage.value = ''
   try {
-    const response = await fetch('http://localhost:5000/api/auth/email/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value
-      })
-    })
-
+    const response = await fetch('http://localhost:5000/api/auth/email/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.value, password: password.value }) })
     const data = await response.json()
-
-    if (!response.ok) {
-      // Handle specific error messages from backend
-      if (response.status === 403 && data.message.includes('pending')) {
-        errorMessage.value = data.message
-      } else if (response.status === 403 && data.message.includes('rejected')) {
-        errorMessage.value = data.message
-      } else if (response.status === 400 && data.message.includes('Google')) {
-        errorMessage.value = data.message
-      } else {
-        errorMessage.value = data.message || 'Login failed'
-      }
-      return
-    }
-
-    // Store JWT and user data
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    authStore.user = data.user
-    authStore.token = data.token
-
+    if (!response.ok) { errorMessage.value = data.message || 'Login failed'; return }
+    localStorage.setItem('token', data.token); localStorage.setItem('user', JSON.stringify(data.user))
+    authStore.user = data.user; authStore.token = data.token
     redirectByRole()
-  } catch (error) {
-    console.error('Login error:', error)
-    errorMessage.value = 'An error occurred during login'
-  } finally {
-    isLoading.value = false
-  }
+  } catch { errorMessage.value = 'An error occurred during login' }
+  finally { isLoading.value = false }
 }
 
 const handleEmailSignup = async () => {
-  if (!name.value || !email.value || !password.value) {
-    errorMessage.value = 'Name, email, and password are required'
-    return
-  }
-
-  if ((role.value === 'tutor' || role.value === 'repair_specialist') && !document.value) {
-    errorMessage.value = 'Document upload is required for tutors and repair specialists'
-    return
-  }
-
-  isLoading.value = true
-  errorMessage.value = ''
-
+  if (!name.value || !email.value || !password.value) { errorMessage.value = 'Name, email, and password are required'; return }
+  if ((role.value === 'tutor' || role.value === 'repair_specialist') && !document.value) { errorMessage.value = 'Document upload is required for tutors and repair specialists'; return }
+  isLoading.value = true; errorMessage.value = ''
   try {
     const formData = new FormData()
-    formData.append('name', name.value)
-    formData.append('email', email.value)
-    formData.append('password', password.value)
-    formData.append('role', role.value)
-    
-    if (document.value) {
-      formData.append('document', document.value)
-    }
-
-    const response = await fetch('http://localhost:5000/api/auth/email/signup', {
-      method: 'POST',
-      body: formData
-    })
-
+    formData.append('name', name.value); formData.append('email', email.value)
+    formData.append('password', password.value); formData.append('role', role.value)
+    if (document.value) formData.append('document', document.value)
+    const response = await fetch('http://localhost:5000/api/auth/email/signup', { method: 'POST', body: formData })
     const data = await response.json()
-
-    if (!response.ok) {
-      errorMessage.value = data.message || 'Signup failed'
-      return
-    }
-
-    // Store JWT and user data
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    authStore.user = data.user
-    authStore.token = data.token
-
-    // Show success message if account is pending
-    if (data.message && data.message.includes('pending')) {
-      alert(data.message)
-    }
-
+    if (!response.ok) { errorMessage.value = data.message || 'Signup failed'; return }
+    localStorage.setItem('token', data.token); localStorage.setItem('user', JSON.stringify(data.user))
+    authStore.user = data.user; authStore.token = data.token
+    if (data.message && data.message.includes('pending')) alert(data.message)
     redirectByRole()
-  } catch (error) {
-    console.error('Signup error:', error)
-    errorMessage.value = 'An error occurred during signup'
-  } finally {
-    isLoading.value = false
-  }
+  } catch { errorMessage.value = 'An error occurred during signup' }
+  finally { isLoading.value = false }
 }
 
-const handleEmailSubmit = () => {
-  if (isLogin.value) {
-    handleEmailLogin()
-  } else {
-    handleEmailSignup()
-  }
-}
-
+const handleEmailSubmit = () => { isLogin.value ? handleEmailLogin() : handleEmailSignup() }
 const redirectByRole = () => {
   if (authStore.user) {
-    const roleRoute: Record<string, string> = {
-      'customer': '/dashboard/customer',
-      'tutor': '/dashboard/tutor',
-      'repair_specialist': '/dashboard/repair',
-      'admin': '/dashboard/admin'
-    }
+    const roleRoute: Record<string, string> = { customer: '/dashboard/customer', tutor: '/dashboard/tutor', repair_specialist: '/dashboard/specialist', admin: '/dashboard/admin' }
     router.push(roleRoute[authStore.user.role] || '/')
-  } else {
-    router.push('/')
-  }
+  } else { router.push('/') }
 }
 
-onMounted(() => {
-  handleGoogleCallback()
-})
-
+onMounted(() => handleGoogleCallback())
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-    <!-- Left Side: Branding/Image -->
-    <div class="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-purple-100 via-white to-purple-50 p-12 lg:flex dark:from-purple-900 dark:via-slate-900 dark:to-black">
-      <!-- Background Image -->
-      <div class="absolute inset-0 opacity-100 dark:opacity-20">
-        <img 
-          src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=2070&auto=format&fit=crop"
-          alt="Music Background"
-          class="h-full w-full object-cover"
-        />
-      </div>
-      
-      <!-- Content Overlay -->
-      <div class="relative z-10">
-        <div class="flex items-center gap-3">
-          <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/20 text-white">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v10.5a3.5 3.5 0 11-2-3.2" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 3v10.5a3.5 3.5 0 11-2-3.2" />
-            </svg>
-          </span>
-          <span class="text-3xl font-bold text-purple-700 dark:bg-gradient-to-r dark:from-purple-200 dark:via-purple-400 dark:to-purple-200 dark:bg-clip-text dark:text-transparent">
-            Melody Mart
-          </span>
+  <div class="auth-root">
+    <!-- Left: Brand Panel -->
+    <div class="auth-left">
+      <div class="auth-left-overlay" />
+      <div class="auth-left-inner">
+        <div class="auth-brand">
+          <div class="auth-logo-mark">
+            <div class="logo-ring" /><div class="logo-dot" />
+          </div>
+          <span class="auth-logo-text">Melody Mart</span>
         </div>
-        <p class="mt-4 text-xl text-purple-800/90 dark:text-purple-200/80">
-          Your one-stop shop for everything musical.
-        </p>
+        <p class="auth-tagline">Your one-stop shop for everything musical.</p>
       </div>
-      
-      <div class="space-y-6 relative z-10">
-        <blockquote class="max-w-xl text-xl font-medium leading-relaxed text-slate-800 dark:text-slate-300">
+      <div class="auth-left-bottom">
+        <blockquote class="auth-quote">
           "The best place to find high-quality instruments and expert tutors. My journey in music started here!"
         </blockquote>
-        <div class="flex items-center gap-4">
-          <div class="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-            AC
-          </div>
+        <div class="auth-reviewer">
+          <div class="auth-reviewer-avatar">AC</div>
           <div>
-             <div class="font-semibold text-slate-900 dark:text-white">Alex Chen</div>
-             <div class="text-sm text-slate-600 dark:text-slate-400">Professional Guitarist</div>
+            <div class="auth-reviewer-name">Alex Chen</div>
+            <div class="auth-reviewer-role">Professional Guitarist</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Right Side: Form -->
-    <div class="flex w-full flex-col justify-center bg-slate-50 px-8 py-12 lg:w-1/2 lg:px-16 xl:px-24 dark:bg-slate-950">
-      <div class="mb-8 flex items-center gap-2 lg:hidden">
-        <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v10.5a3.5 3.5 0 11-2-3.2" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 3v10.5a3.5 3.5 0 11-2-3.2" />
-            </svg>
-        </span>
-        <span class="text-2xl font-bold text-slate-900 dark:text-white">Melody Mart</span>
+    <!-- Right: Form Panel -->
+    <div class="auth-right">
+      <!-- Mobile brand -->
+      <div class="auth-mobile-brand">
+        <div class="auth-logo-mark sm"><div class="logo-ring" /><div class="logo-dot" /></div>
+        <span class="auth-logo-text sm">Melody Mart</span>
       </div>
 
-      <div class="mx-auto w-full max-w-md">
-        <h1 class="mb-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {{ isLogin ? 'Welcome back' : 'Create an account' }}
-        </h1>
-        <p class="mb-8 text-slate-600 dark:text-slate-400">
-          {{ isLogin ? 'Choose your preferred login method' : 'Start your musical journey today' }}
-        </p>
-
-        <!-- Tab Navigation -->
-        <div class="mb-6 flex gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-900/50">
-          <button
-            @click="switchTab('google')"
-            :class="[
-              'flex-1 rounded-lg px-4 py-2 text-sm font-medium transition',
-              activeTab === 'google' 
-                ? 'bg-purple-600 text-white shadow-lg' 
-                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-            ]"
-          >
-            Google Login
-          </button>
-          <button
-            @click="switchTab('email')"
-            :class="[
-              'flex-1 rounded-lg px-4 py-2 text-sm font-medium transition',
-              activeTab === 'email' 
-                ? 'bg-purple-600 text-white shadow-lg' 
-                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-            ]"
-          >
-            Email Login
-          </button>
+      <div class="auth-form-wrap">
+        <div class="auth-form-head">
+          <h1 class="auth-title">{{ isLogin ? 'Welcome back' : 'Create an account' }}</h1>
+          <p class="auth-subtitle">{{ isLogin ? 'Choose your preferred login method' : 'Start your musical journey today' }}</p>
         </div>
 
-        <!-- Google Tab -->
-        <div v-if="activeTab === 'google'" class="space-y-4">
-          <button 
-            @click="initiateGoogleLogin" 
-            type="button"
-            class="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50 dark:border-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-50"
-          >
-            <svg class="h-5 w-5" viewBox="0 0 24 24">
+        <!-- Tab switcher -->
+        <div class="auth-tabs">
+          <button @click="switchTab('google')" :class="['auth-tab', activeTab === 'google' ? 'auth-tab-active' : '']">Google Login</button>
+          <button @click="switchTab('email')"  :class="['auth-tab', activeTab === 'email'  ? 'auth-tab-active' : '']">Email Login</button>
+        </div>
+
+        <!-- Google tab -->
+        <div v-if="activeTab === 'google'" class="auth-section">
+          <button @click="initiateGoogleLogin" type="button" class="google-btn">
+            <svg class="google-icon" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -349,168 +164,227 @@ onMounted(() => {
             Continue with Google
           </button>
 
-          <div v-if="authStore.error" class="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-            {{ authStore.error }}
-          </div>
-
-          <p class="text-center text-xs text-slate-500 dark:text-slate-500">
-            By continuing, you agree to our Terms of Service and Privacy Policy
-          </p>
+          <div v-if="authStore.error" class="auth-alert auth-alert-error">{{ authStore.error }}</div>
+          <p class="auth-legal">By continuing, you agree to our Terms of Service and Privacy Policy</p>
         </div>
 
-        <!-- Email Tab -->
-        <div v-if="activeTab === 'email'">
-          <!-- Login/Signup Toggle -->
-          <div class="mb-4 flex justify-center gap-2">
-            <button
-              @click="isLogin = true"
-              :class="[
-                'px-4 py-1 text-sm font-medium transition',
-                isLogin ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300'
-              ]"
-            >
-              Login
-            </button>
-            <span class="text-slate-400 dark:text-slate-600">|</span>
-            <button
-              @click="isLogin = false"
-              :class="[
-                'px-4 py-1 text-sm font-medium transition',
-                !isLogin ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300'
-              ]"
-            >
-              Sign Up
-            </button>
+        <!-- Email tab -->
+        <div v-if="activeTab === 'email'" class="auth-section">
+          <div class="auth-mode-toggle">
+            <button @click="isLogin = true"  :class="['auth-mode-btn', isLogin  ? 'active' : '']">Sign In</button>
+            <span class="auth-mode-sep">|</span>
+            <button @click="isLogin = false" :class="['auth-mode-btn', !isLogin ? 'active' : '']">Sign Up</button>
           </div>
 
-          <form @submit.prevent="handleEmailSubmit" class="space-y-4">
-            <!-- Name (Signup only) -->
-            <div v-if="!isLogin">
-              <label for="name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
-              <input 
-                id="name"
-                v-model="name"
-                type="text" 
-                required
-                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:placeholder-slate-500"
-                placeholder="John Doe"
-              />
+          <form @submit.prevent="handleEmailSubmit" class="auth-form">
+            <div v-if="!isLogin" class="field">
+              <label class="label">Full Name</label>
+              <input v-model="name" type="text" required class="input" placeholder="John Doe" />
             </div>
-            
-            <!-- Email -->
-            <div>
-              <label for="email" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
-              <input 
-                id="email"
-                v-model="email"
-                type="email" 
-                required
-                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:placeholder-slate-500"
-                placeholder="name@example.com"
-              />
+            <div class="field">
+              <label class="label">Email Address</label>
+              <input v-model="email" type="email" required class="input" placeholder="name@example.com" />
             </div>
-
-            <!-- Password -->
-            <div>
-              <div class="mb-1 flex items-center justify-between">
-                <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-                <button v-if="isLogin" type="button" class="text-sm font-medium text-purple-600 hover:text-purple-500 dark:text-purple-400 dark:hover:text-purple-300">
-                  Forgot password?
-                </button>
+            <div class="field">
+              <div class="label-row">
+                <label class="label">Password</label>
+                <button v-if="isLogin" type="button" class="forgot-btn">Forgot password?</button>
               </div>
-              <input 
-                id="password"
-                v-model="password"
-                type="password" 
-                required
-                :minlength="isLogin ? undefined : 6"
-                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:placeholder-slate-500"
-                placeholder="••••••••"
-              />
+              <input v-model="password" type="password" required :minlength="isLogin ? undefined : 6" class="input" placeholder="••••••••" />
             </div>
 
-            <!-- Role Selection (Signup only) -->
-            <div v-if="!isLogin">
-              <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">I am a:</label>
-              <div class="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  @click="role = 'customer'"
-                  :class="[
-                    'rounded-lg border px-3 py-2 text-sm font-medium transition',
-                    role === 'customer'
-                      ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:border-slate-700'
-                  ]"
-                >
-                  Customer
-                </button>
-                <button
-                  type="button"
-                  @click="role = 'tutor'"
-                  :class="[
-                    'rounded-lg border px-3 py-2 text-sm font-medium transition',
-                    role === 'tutor'
-                      ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:border-slate-700'
-                  ]"
-                >
-                  Tutor
-                </button>
-                <button
-                  type="button"
-                  @click="role = 'repair_specialist'"
-                  :class="[
-                    'rounded-lg border px-3 py-2 text-sm font-medium transition',
-                    role === 'repair_specialist'
-                      ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:border-slate-700'
-                  ]"
-                >
-                  Repair
-                </button>
+            <!-- Role selection (signup) -->
+            <div v-if="!isLogin" class="field">
+              <label class="label">I am a:</label>
+              <div class="role-grid">
+                <button type="button" @click="role = 'customer'"         :class="['role-btn', role === 'customer'         ? 'role-active' : '']">Customer</button>
+                <button type="button" @click="role = 'tutor'"            :class="['role-btn', role === 'tutor'            ? 'role-active' : '']">Tutor</button>
+                <button type="button" @click="role = 'repair_specialist'" :class="['role-btn', role === 'repair_specialist' ? 'role-active' : '']">Repair</button>
               </div>
             </div>
 
-            <!-- Document Upload (Signup only, for tutor/repair) -->
-            <div v-if="!isLogin && (role === 'tutor' || role === 'repair_specialist')">
-              <label for="document" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <!-- Document upload (signup, tutor/repair) -->
+            <div v-if="!isLogin && (role === 'tutor' || role === 'repair_specialist')" class="field">
+              <label class="label">
                 {{ role === 'tutor' ? 'Teaching Certificate' : 'License/Certificate' }}
-                <span class="text-red-400">*</span>
+                <span class="req">*</span>
               </label>
-              <input 
-                id="document"
-                type="file" 
-                @change="handleFileChange"
-                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 file:mr-4 file:rounded-lg file:border-0 file:bg-purple-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-purple-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100"
-              />
-              <p class="mt-1 text-xs text-slate-500 dark:text-slate-500">
-                Upload your {{ role === 'tutor' ? 'teaching certificate' : 'professional license' }} (JPG, PNG, PDF, DOC, DOCX - Max 5MB)
-              </p>
+              <input type="file" @change="handleFileChange" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="file-input" />
+              <p class="field-hint">JPG, PNG, PDF, DOC — Max 5MB</p>
             </div>
 
-            <!-- Error Message -->
-            <div v-if="errorMessage || authStore.error" class="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-              {{ errorMessage || authStore.error }}
-            </div>
+            <div v-if="errorMessage || authStore.error" class="auth-alert auth-alert-error">{{ errorMessage || authStore.error }}</div>
 
-            <!-- Submit Button -->
-            <button 
-              type="submit" 
-              :disabled="isLoading"
-              class="w-full rounded-xl bg-purple-600 px-4 py-3 font-semibold text-white shadow-lg shadow-purple-600/20 transition hover:bg-purple-500 hover:shadow-purple-600/40 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="!isLoading">{{ isLogin ? 'Sign in' : 'Create account' }}</span>
+            <button type="submit" :disabled="isLoading" class="submit-btn">
+              <span v-if="!isLoading">{{ isLogin ? 'Sign In' : 'Create Account' }}</span>
               <span v-else>{{ isLogin ? 'Signing in...' : 'Creating account...' }}</span>
             </button>
           </form>
 
-          <p class="mt-4 text-center text-xs text-slate-500">
-            By continuing, you agree to our Terms of Service and Privacy Policy
-          </p>
+          <p class="auth-legal">By continuing, you agree to our Terms of Service and Privacy Policy</p>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.auth-root { display: flex; min-height: 100vh; }
+
+/* ---- Left Panel ---- */
+.auth-left {
+  display: none;
+  position: relative; width: 50%; overflow: hidden;
+  background: var(--mm-graphite);
+}
+.auth-left-overlay {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=2070&auto=format&fit=crop');
+  background-size: cover; background-position: center;
+  opacity: 0.6;
+}
+.auth-left::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(17,15,22,0.25) 0%, rgba(17,15,22,0.7) 100%);
+}
+.auth-left-inner { position: relative; z-index: 1; padding: 2.5rem 2.5rem 0; }
+.auth-left-bottom { position: relative; z-index: 1; padding: 0 2.5rem 2.5rem; margin-top: auto; }
+.auth-left { flex-direction: column; }
+
+.auth-brand { display: flex; align-items: center; gap: 0.875rem; margin-bottom: 1.25rem; }
+.auth-logo-mark {
+  position: relative; width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper));
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.auth-logo-mark.sm { width: 36px; height: 36px; }
+.logo-ring { position: absolute; inset: 20%; border-radius: 50%; border: 1.5px solid rgba(9,8,12,0.4); }
+.logo-dot  { position: absolute; inset: 42%; border-radius: 50%; background: rgba(9,8,12,0.5); }
+.auth-logo-text { font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; color: var(--mm-ivory); letter-spacing: -0.01em; }
+.auth-logo-text.sm { font-size: 1.25rem; }
+.auth-tagline { font-size: 1rem; color: var(--mm-sand); line-height: 1.5; }
+
+.auth-quote {
+  font-family: 'DM Serif Display', serif; font-size: 1.125rem; font-weight: 400;
+  color: var(--mm-cream); line-height: 1.65; margin: 0 0 1.25rem;
+  padding-left: 1rem; border-left: 2px solid var(--mm-gold);
+}
+.auth-reviewer { display: flex; align-items: center; gap: 0.875rem; }
+.auth-reviewer-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper));
+  color: var(--mm-ink); font-size: 0.8125rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.auth-reviewer-name { font-size: 0.875rem; font-weight: 700; color: var(--mm-ivory); }
+.auth-reviewer-role { font-size: 0.75rem; color: var(--mm-sand); margin-top: 1px; }
+
+/* ---- Right Panel ---- */
+.auth-right {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  background: var(--mm-carbon);
+  padding: 2.5rem 2rem;
+}
+.auth-mobile-brand { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
+.auth-form-wrap { width: 100%; max-width: 420px; margin: 0 auto; }
+.auth-form-head { margin-bottom: 1.75rem; }
+.auth-title { font-family: 'DM Serif Display', serif; font-size: 2rem; font-weight: 400; color: var(--mm-ivory); margin: 0 0 0.375rem; letter-spacing: -0.02em; }
+.auth-subtitle { font-size: 0.9375rem; color: var(--mm-sand); margin: 0; }
+
+/* Tabs */
+.auth-tabs { display: flex; background: var(--mm-onyx); border: 1px solid var(--mm-warm-line); border-radius: 0.75rem; padding: 0.25rem; gap: 0.25rem; margin-bottom: 1.5rem; }
+.auth-tab { flex: 1; padding: 0.5625rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; border: none; background: transparent; color: var(--mm-stone); cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.auth-tab:hover { color: var(--mm-sand); }
+.auth-tab-active { background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink); box-shadow: 0 4px 12px rgba(212,168,83,0.25); }
+
+/* Sections */
+.auth-section { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Google button */
+.google-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+  width: 100%; padding: 0.875rem 1.25rem;
+  background: var(--mm-ivory); border: 1px solid rgba(255,255,255,0.15); border-radius: 0.75rem;
+  color: #111827; font-size: 0.9375rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.google-btn:hover { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.4); transform: translateY(-1px); }
+.google-icon { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* Mode toggle */
+.auth-mode-toggle { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.auth-mode-btn { background: none; border: none; padding: 0.25rem 0.75rem; font-size: 0.9375rem; font-weight: 600; color: var(--mm-stone); cursor: pointer; transition: color 0.2s; font-family: 'DM Sans', sans-serif; border-radius: 0.375rem; }
+.auth-mode-btn.active { color: var(--mm-gold); }
+.auth-mode-btn:hover:not(.active) { color: var(--mm-sand); }
+.auth-mode-sep { color: var(--mm-warm-line); }
+
+/* Form */
+.auth-form { display: flex; flex-direction: column; gap: 0.875rem; }
+.field { display: flex; flex-direction: column; gap: 0.3125rem; }
+.label { font-size: 0.8125rem; font-weight: 600; color: var(--mm-sand); }
+.req { color: var(--mm-coral); }
+.label-row { display: flex; justify-content: space-between; align-items: center; }
+.forgot-btn { font-size: 0.8125rem; font-weight: 600; color: var(--mm-gold); background: none; border: none; cursor: pointer; padding: 0; transition: opacity 0.2s; font-family: 'DM Sans', sans-serif; }
+.forgot-btn:hover { opacity: 0.8; }
+
+.input {
+  padding: 0.6875rem 0.875rem;
+  background: var(--mm-mist); border: 1px solid var(--mm-warm-line); border-radius: 0.625rem;
+  font-size: 0.9375rem; color: var(--mm-ivory); outline: none; width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.input::placeholder { color: var(--mm-stone); }
+.input:focus { border-color: var(--mm-gold); box-shadow: 0 0 0 3px rgba(212,168,83,0.12); }
+
+/* Role buttons */
+.role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.role-btn {
+  padding: 0.5625rem 0.5rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  background: var(--mm-mist); border: 1px solid var(--mm-warm-line); color: var(--mm-sand);
+  cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.role-btn:hover { border-color: rgba(212,168,83,0.3); color: var(--mm-ivory); }
+.role-active { background: rgba(212,168,83,0.1); border-color: rgba(212,168,83,0.4); color: var(--mm-gold); }
+
+/* File input */
+.file-input {
+  width: 100%; padding: 0.5rem 0.875rem;
+  background: var(--mm-mist); border: 1px solid var(--mm-warm-line); border-radius: 0.625rem;
+  font-size: 0.8125rem; color: var(--mm-ivory); cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.file-input::file-selector-button {
+  padding: 0.375rem 0.875rem; background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper));
+  color: var(--mm-ink); border: none; border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 700;
+  cursor: pointer; margin-right: 0.75rem; font-family: 'DM Sans', sans-serif;
+}
+.field-hint { font-size: 0.6875rem; color: var(--mm-stone); }
+
+/* Alerts */
+.auth-alert { padding: 0.75rem 1rem; border-radius: 0.625rem; font-size: 0.8125rem; font-weight: 500; }
+.auth-alert-error { background: rgba(224,112,96,0.1); color: var(--mm-coral); border: 1px solid rgba(224,112,96,0.25); }
+
+/* Submit */
+.submit-btn {
+  width: 100%; padding: 0.875rem;
+  background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink);
+  border: none; border-radius: 0.625rem; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 16px rgba(212,168,83,0.25);
+}
+.submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(212,168,83,0.35); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.auth-legal { text-align: center; font-size: 0.6875rem; color: var(--mm-stone); }
+
+/* Responsive */
+@media (min-width: 1024px) {
+  .auth-left { display: flex; }
+  .auth-right { padding: 3rem 4rem; }
+  .auth-mobile-brand { display: none; }
+}
+@media (max-width: 1023px) {
+  .auth-mobile-brand { display: flex; }
+}
+</style>

@@ -42,39 +42,88 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/payment/return',
+      name: 'payment-return',
+      component: () => import('../views/PaymentReturnView.vue'),
+    },
+    {
+      path: '/lesson-payment/return',
+      name: 'lesson-payment-return',
+      component: () => import('../views/LessonPaymentReturnView.vue'),
+    },
+    {
       path: '/dashboard/customer',
-      name: 'customer-dashboard',
-      component: () => import('../views/CustomerDashboard.vue'),
-      meta: { requiresAuth: true, role: 'customer', requiresApproval: true }
+      component: () => import('../layouts/CustomerLayout.vue'),
+      meta: { requiresAuth: true, role: 'customer', requiresApproval: true },
+      children: [
+        { path: '', name: 'customer-dashboard', component: () => import('../views/CustomerDashboard.vue') },
+        { path: 'home', name: 'customer-home', component: () => import('../views/HomeView.vue') },
+        { path: 'cart', name: 'customer-cart', component: () => import('../views/MyCartView.vue') },
+        { path: 'orders', name: 'customer-orders', component: () => import('../views/OrdersView.vue') },
+        { path: 'lessons', name: 'customer-lessons', component: () => import('../views/LessonsView.vue') },
+        { path: 'lesson-payment/:bookingId', name: 'customer-lesson-payment', component: () => import('../views/LessonPaymentView.vue') },
+        { path: 'services', name: 'customer-services', component: () => import('../views/RequestedServicesView.vue') },
+        { path: 'settings', name: 'customer-settings', component: () => import('../views/SettingsView.vue') },
+      ],
     },
     {
       path: '/dashboard/tutor',
-      name: 'tutor-dashboard',
-      component: () => import('../views/TutorDashboard.vue'),
-      meta: { requiresAuth: true, role: 'tutor', requiresApproval: true }
+      component: () => import('../layouts/TutorLayout.vue'),
+      meta: { requiresAuth: true, role: 'tutor', requiresApproval: true },
+      children: [
+        { path: '', name: 'tutor-dashboard', component: () => import('../views/tutor/TutorOverviewView.vue') },
+        { path: 'create-lesson', name: 'tutor-create-lesson', component: () => import('../views/tutor/TutorCreateLessonView.vue') },
+        { path: 'lessons', name: 'tutor-lessons', component: () => import('../views/tutor/TutorMyLessonsView.vue') },
+        { path: 'bookings', name: 'tutor-bookings', component: () => import('../views/tutor/TutorBookingsView.vue') },
+        { path: 'earnings', name: 'tutor-earnings', component: () => import('../views/tutor/TutorEarningsView.vue') },
+        { path: 'profile', name: 'tutor-profile', component: () => import('../views/tutor/TutorProfileView.vue') },
+      ],
     },
     {
-      path: '/dashboard/repair',
-      name: 'repair-dashboard',
-      component: () => import('../views/RepairDashboard.vue'),
-      meta: { requiresAuth: true, role: 'repair_specialist', requiresApproval: true }
+      path: '/dashboard/specialist',
+      component: () => import('../layouts/SpecialistLayout.vue'),
+      meta: { requiresAuth: true, role: 'repair_specialist', requiresApproval: true },
+      children: [
+        { path: '', name: 'specialist-dashboard', component: () => import('../views/specialist/SpecialistOverviewView.vue') },
+        { path: 'requests', name: 'specialist-requests', component: () => import('../views/specialist/SpecialistServiceRequestsView.vue') },
+        { path: 'earnings', name: 'specialist-earnings', component: () => import('../views/specialist/SpecialistEarningsView.vue') },
+        { path: 'profile', name: 'specialist-profile', component: () => import('../views/specialist/SpecialistProfileView.vue') },
+      ],
     },
     {
       path: '/dashboard/admin',
-      name: 'admin-dashboard',
-      component: () => import('../views/AdminDashboard.vue'),
-      meta: { requiresAuth: true, role: 'admin' }
+      component: () => import('../layouts/AdminLayout.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+      children: [
+        { path: '', name: 'admin-dashboard', component: () => import('../views/admin/AdminOverviewView.vue') },
+        { path: 'users', name: 'admin-users', component: () => import('../views/admin/AdminUsersView.vue') },
+        { path: 'orders', name: 'admin-orders', component: () => import('../views/admin/AdminOrdersView.vue') },
+        { path: 'instruments', name: 'admin-instruments', component: () => import('../views/admin/AdminInstrumentsView.vue') },
+      ],
     },
     {
       path: '/settings',
       name: 'settings',
       component: () => import('../views/SettingsView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/messages',
+      name: 'messages',
+      component: () => import('../views/MessagesView.vue'),
+      meta: { requiresAuth: true }
     }
   ],
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
+    }
+
+    if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'smooth',
+      }
     } else {
       return { top: 0 }
     }
@@ -82,7 +131,7 @@ const router = createRouter({
 })
 
 // Navigation guards
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   
   // Check if route requires authentication
@@ -92,36 +141,42 @@ router.beforeEach((to, from, next) => {
   
   // If user is authenticated
   if (authStore.isAuthenticated && authStore.user) {
-    // Check if user account is rejected
+    // Check if user account is rejected — logout silently and redirect to auth
     if (authStore.isRejected && to.name !== 'auth' && to.name !== 'home') {
-      alert('Your account has been rejected. Please contact support.')
       authStore.logout()
       return next('/auth')
     }
     
-    // Check if route requires approval (for tutor/repair specialist)
+    // Check if route requires approval (for tutor/specialist roles only)
     if (to.meta.requiresApproval) {
-      if (authStore.isPendingApproval && to.name !== 'home') {
-        alert('Your account is pending admin approval. Please wait for approval to access this page.')
+      // Only refresh when verificationStatus is missing from stored user (e.g. after email login)
+      if (!authStore.user.verificationStatus) {
+        await authStore.refreshUserData()
+      }
+
+      // Block pending users (tutors/repair specialists awaiting admin approval)
+      if (authStore.isPendingApproval) {
         return next('/')
       }
-      
-      // Check if user has approved status
-      if ((authStore.user.role === 'tutor' || authStore.user.role === 'repair_specialist') && 
-          !authStore.isApproved && to.name !== 'home') {
+
+      // Block tutors who are explicitly not approved (has verificationStatus but it's not APPROVED)
+      if (authStore.user.role === 'tutor' && authStore.user.verificationStatus &&
+          !authStore.isApproved) {
         return next('/')
       }
     }
     
     // Check if route requires specific role
     if (to.meta.role && authStore.user.role !== to.meta.role) {
-      // Redirect to appropriate dashboard
-      return next(`/dashboard/${authStore.user.role}`)
+      // Redirect to appropriate dashboard (handle repair_specialist special case)
+      const dashPath = authStore.user.role === 'repair_specialist' ? '/dashboard/specialist' : `/dashboard/${authStore.user.role}`
+      return next(dashPath)
     }
-    
+
     // Redirect from auth page if already logged in and approved
     if (to.name === 'auth' && authStore.isApproved) {
-      return next(`/dashboard/${authStore.user.role}`)
+      const dashPath = authStore.user.role === 'repair_specialist' ? '/dashboard/specialist' : `/dashboard/${authStore.user.role}`
+      return next(dashPath)
     }
   }
   

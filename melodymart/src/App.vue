@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { computed } from 'vue'
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
+
+const route = useRoute()
+const isDashboard = computed(() => route.path.startsWith('/dashboard'))
 </script>
 
 <template>
   <div class="min-h-screen bg-background text-foreground">
-    <Header />
+    <Header v-if="!isDashboard" />
     <main class="w-full">
       <RouterView />
     </main>
-    <Footer />
+    <Footer v-if="!isDashboard" />
   </div>
 </template>
 

@@ -281,20 +281,20 @@ onMounted(async () => {
           <h3 class="mb-4 text-xl font-semibold text-white">Profile Information</h3>
           <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <div class="text-sm text-slate-400">Specialization</div>
-              <div class="text-white">{{ authStore.user?.specialization || 'Not set' }}</div>
+              <div class="text-sm text-slate-500 font-semibold">Specialization</div>
+              <div class="text-lg text-white font-medium">{{ authStore.user?.specialization || 'Not set' }}</div>
             </div>
             <div>
-              <div class="text-sm text-slate-400">Experience</div>
-              <div class="text-white">{{ authStore.user?.experience || '0' }} years</div>
+              <div class="text-sm text-slate-500 font-semibold">Experience</div>
+              <div class="text-lg text-white font-medium">{{ authStore.user?.experience || '0' }} years</div>
             </div>
             <div>
-              <div class="text-sm text-slate-400">Hourly Rate</div>
-              <div class="text-white">Rs {{ authStore.user?.hourlyRate || '0' }}/hour</div>
+              <div class="text-sm text-slate-500 font-semibold">Hourly Rate</div>
+              <div class="text-lg text-white font-medium">Rs {{ authStore.user?.hourlyRate || '0' }}/hour</div>
             </div>
             <div>
-              <div class="text-sm text-slate-400">Status</div>
-              <div :class="verificationStatusColor">
+              <div class="text-sm text-slate-500 font-semibold">Status</div>
+              <div :class="[verificationStatusColor, 'text-lg font-medium']">
                 {{ verificationStatusText }}
               </div>
             </div>
