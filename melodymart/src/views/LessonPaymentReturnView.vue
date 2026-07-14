@@ -1,28 +1,26 @@
 <template>
-  <div class="return-page">
-    <div class="return-card">
-      <!-- Status Icon -->
-      <div class="status-icon" :class="iconClass">
-        <span v-if="isSuccess">✓</span>
-        <span v-else-if="isCancelled">!</span>
-        <span v-else>?</span>
+  <div class="lpr-page">
+    <div class="lpr-card">
+      <div class="lpr-icon" :class="iconClass">
+        <svg v-if="isSuccess" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <svg v-else-if="isCancelled" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <svg v-else width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </div>
 
-      <h1 class="return-title">{{ title }}</h1>
-      <p class="return-message">{{ message }}</p>
-      <p class="status-message">{{ statusMessage }}</p>
+      <h1 class="lpr-title">{{ title }}</h1>
+      <p class="lpr-message">{{ message }}</p>
+      <p class="lpr-status">{{ statusMessage }}</p>
 
-      <div v-if="bookingId" class="booking-id-box">
-        Booking ID: <span class="booking-id-value">{{ bookingId }}</span>
+      <div v-if="bookingId" class="lpr-booking-box">
+        Booking ID: <span class="lpr-booking-id">{{ bookingId }}</span>
       </div>
 
-      <div class="action-buttons">
-        <button @click="goToMyLessons" class="btn-primary">
-          📚 Go to My Lessons
+      <div class="lpr-actions">
+        <button @click="goToMyLessons" class="lpr-btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Go to My Lessons
         </button>
-        <button @click="goToBrowse" class="btn-secondary">
-          Browse More Lessons
-        </button>
+        <button @click="goToBrowse" class="lpr-btn-secondary">Browse More Lessons</button>
       </div>
     </div>
   </div>
@@ -50,9 +48,9 @@ const isRedirecting = ref(false)
 let redirectTimer
 
 const iconClass = computed(() => {
-  if (isSuccess.value) return 'icon-success'
-  if (isCancelled.value) return 'icon-cancelled'
-  return 'icon-unknown'
+  if (isSuccess.value) return 'icon-emerald'
+  if (isCancelled.value) return 'icon-amber'
+  return 'icon-default'
 })
 
 const title = computed(() => {
@@ -62,12 +60,8 @@ const title = computed(() => {
 })
 
 const message = computed(() => {
-  if (isSuccess.value) {
-    return 'Your payment was completed. Your lesson booking is being confirmed — you will be redirected to My Lessons shortly.'
-  }
-  if (isCancelled.value) {
-    return 'Your payment was cancelled. Your booking is still saved — you can pay anytime from My Lessons.'
-  }
+  if (isSuccess.value) return 'Your payment was completed. Your lesson booking is being confirmed — you will be redirected to My Lessons shortly.'
+  if (isCancelled.value) return 'Your payment was cancelled. Your booking is still saved — you can pay anytime from My Lessons.'
   return 'We could not determine the payment result. Please check My Lessons for your booking status.'
 })
 
@@ -83,9 +77,7 @@ const requestReconcile = async () => {
   reconcileRequested.value = true
   try {
     await lessonService.reconcilePayment(bookingId.value)
-  } catch {
-    // Let poll retry
-  }
+  } catch { /* let poll retry */ }
 }
 
 const redirectToMyLessons = () => {
@@ -99,11 +91,9 @@ const redirectToMyLessons = () => {
 const pollBookingStatus = async () => {
   const token = localStorage.getItem('token')
   if (!token || !bookingId.value) return
-
   try {
     const data = await lessonService.getBookingDetails(bookingId.value)
     const payStatus = data?.paymentStatus || ''
-
     if (payStatus === 'Paid') {
       statusMessage.value = 'Payment confirmed! Your lesson is now booked.'
       clearTimeout(redirectTimer)
@@ -131,156 +121,60 @@ const pollBookingStatus = async () => {
 }
 
 onMounted(() => {
-  if (isSuccess.value) {
-    void pollBookingStatus()
-  } else if (isCancelled.value) {
-    statusMessage.value = 'Your booking has been saved. Complete payment anytime from My Lessons.'
-  }
+  if (isSuccess.value) void pollBookingStatus()
+  else if (isCancelled.value) statusMessage.value = 'Your booking has been saved. Complete payment anytime from My Lessons.'
 })
 </script>
 
 <style scoped>
-.return-page {
+.lpr-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #FBF7FF 0%, rgba(222, 172, 245, 0.12) 50%, #f8f5fb 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  background: var(--mm-graphite);
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem 1.5rem;
 }
-
-.return-card {
-  background: white;
-  border: 2px solid #DEACF5;
-  border-radius: 24px;
-  padding: 40px;
-  max-width: 520px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(151, 84, 203, 0.12);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
+.lpr-card {
+  background: var(--mm-carbon);
+  border: 1px solid var(--mm-warm-line);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  max-width: 32rem; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column; gap: 0;
 }
-
-.status-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 20px;
+.lpr-icon {
+  width: 64px; height: 64px; border-radius: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.25rem;
 }
-
-.icon-success {
-  background: rgba(5, 150, 105, 0.12);
-  color: #059669;
-  border: 1.5px solid rgba(5, 150, 105, 0.2);
+.icon-emerald { background: rgba(56,168,130,0.12); color: var(--mm-emerald); border: 1.5px solid rgba(56,168,130,0.25); }
+.icon-amber   { background: rgba(245,158,11,0.12);  color: #F59E0B; border: 1.5px solid rgba(245,158,11,0.25); }
+.icon-default { background: rgba(42,157,159,0.1);   color: var(--mm-teal); border: 1.5px solid rgba(42,157,159,0.25); }
+.lpr-title   { font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; color: var(--mm-ivory); margin: 0 0 0.75rem; letter-spacing: -0.02em; }
+.lpr-message { font-size: 0.9375rem; color: var(--mm-sand); line-height: 1.6; margin: 0 0 0.5rem; font-family: 'DM Sans', sans-serif; }
+.lpr-status  { font-size: 0.8125rem; color: var(--mm-stone); margin: 0 0 1.25rem; font-family: 'DM Sans', sans-serif; }
+.lpr-booking-box {
+  padding: 0.75rem 1rem;
+  background: var(--mm-onyx); border: 1px solid var(--mm-warm-line);
+  border-radius: 0.625rem; font-size: 0.8125rem; color: var(--mm-stone);
+  margin-bottom: 1.5rem; font-family: 'DM Sans', sans-serif;
 }
-
-.icon-cancelled {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-  border: 1.5px solid rgba(245, 158, 11, 0.2);
+.lpr-booking-id { font-family: 'Courier New', monospace; font-weight: 700; color: var(--mm-teal); word-break: break-all; }
+.lpr-actions { display: flex; flex-direction: column; gap: 0.625rem; }
+.lpr-btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.8125rem 1.25rem;
+  background: linear-gradient(135deg, var(--mm-teal), #1F8080); color: var(--mm-ink);
+  border: none; border-radius: 0.75rem; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif; box-shadow: 0 4px 14px rgba(42,157,159,0.25);
 }
-
-.icon-unknown {
-  background: rgba(151, 84, 203, 0.08);
-  color: #9754CB;
-  border: 1.5px solid rgba(151, 84, 203, 0.15);
+.lpr-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(42,157,159,0.35); }
+.lpr-btn-secondary {
+  padding: 0.75rem 1.25rem;
+  background: transparent; color: var(--mm-sand); border: 1px solid var(--mm-warm-line);
+  border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
 }
-
-.return-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: #1b1030;
-  margin: 0 0 12px 0;
-  letter-spacing: -0.5px;
-}
-
-.return-message {
-  font-size: 15px;
-  color: rgba(40, 16, 60, 0.7);
-  line-height: 1.6;
-  margin: 0 0 8px 0;
-}
-
-.status-message {
-  font-size: 13px;
-  color: rgba(40, 16, 60, 0.5);
-  margin: 0 0 20px 0;
-}
-
-.booking-id-box {
-  width: 100%;
-  padding: 12px 16px;
-  background: rgba(151, 84, 203, 0.05);
-  border: 1px solid rgba(151, 84, 203, 0.15);
-  border-radius: 10px;
-  font-size: 13px;
-  color: rgba(40, 16, 60, 0.65);
-  margin-bottom: 24px;
-}
-
-.booking-id-value {
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  color: #6237A0;
-  word-break: break-all;
-}
-
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-}
-
-.btn-primary {
-  padding: 13px 20px;
-  background: linear-gradient(90deg, #9754CB, #DEACF5);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(151, 84, 203, 0.25);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(151, 84, 203, 0.3);
-}
-
-.btn-secondary {
-  padding: 11px 20px;
-  background: transparent;
-  color: #6237A0;
-  border: 1.5px solid rgba(151, 84, 203, 0.25);
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background: rgba(151, 84, 203, 0.06);
-}
-
-@media (max-width: 480px) {
-  .return-card {
-    padding: 28px 20px;
-    border-radius: 16px;
-  }
-
-  .return-title {
-    font-size: 22px;
-  }
-}
+.lpr-btn-secondary:hover { background: var(--mm-mist); color: var(--mm-ivory); }
+@media (max-width: 480px) { .lpr-card { padding: 1.5rem; border-radius: 1rem; } .lpr-title { font-size: 1.5rem; } }
 </style>

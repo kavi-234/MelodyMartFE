@@ -1,17 +1,18 @@
 <template>
   <div class="page">
     <div class="page-header">
-      <h1 class="page-title">Create Lesson</h1>
-      <p class="page-subtitle">Add a new lesson for students to discover and book.</p>
+      <div>
+        <h1 class="page-title">Create Lesson</h1>
+        <p class="page-subtitle">Add a new lesson for students to discover and book.</p>
+      </div>
     </div>
 
     <div class="form-card">
       <div v-if="successMessage" class="alert alert-success">✓ {{ successMessage }}</div>
-      <div v-if="errorMessage" class="alert alert-error">⚠️ {{ errorMessage }}</div>
+      <div v-if="errorMessage" class="alert alert-error">⚠ {{ errorMessage }}</div>
 
       <form @submit.prevent="handleSubmit" class="form">
 
-        <!-- Basic Info -->
         <section class="form-section">
           <h2 class="section-title">Basic Information</h2>
           <div class="field">
@@ -50,7 +51,6 @@
           </div>
         </section>
 
-        <!-- Availability -->
         <section class="form-section">
           <h2 class="section-title">Availability</h2>
           <div class="field">
@@ -73,7 +73,6 @@
           </div>
         </section>
 
-        <!-- Location -->
         <section class="form-section">
           <h2 class="section-title">Format</h2>
           <div class="radio-group">
@@ -103,7 +102,6 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const TIME_SLOTS = ['09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM']
 
@@ -113,27 +111,18 @@ const form = reactive({
   availableDays: [] as string[], availableTimeSlots: [] as string[],
   isOnline: true, location: '',
 })
-
 const loading = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
 
-const toggleDay = (d: string) => {
-  const i = form.availableDays.indexOf(d)
-  i > -1 ? form.availableDays.splice(i, 1) : form.availableDays.push(d)
-}
-const toggleSlot = (s: string) => {
-  const i = form.availableTimeSlots.indexOf(s)
-  i > -1 ? form.availableTimeSlots.splice(i, 1) : form.availableTimeSlots.push(s)
-}
+const toggleDay = (d: string) => { const i = form.availableDays.indexOf(d); i > -1 ? form.availableDays.splice(i, 1) : form.availableDays.push(d) }
+const toggleSlot = (s: string) => { const i = form.availableTimeSlots.indexOf(s); i > -1 ? form.availableTimeSlots.splice(i, 1) : form.availableTimeSlots.push(s) }
 
 const handleSubmit = async () => {
-  errorMessage.value = ''
-  successMessage.value = ''
+  errorMessage.value = ''; successMessage.value = ''
   if (!form.title || !form.description || !form.instrument) { errorMessage.value = 'Please fill in all required fields.'; return }
   if (!form.availableDays.length) { errorMessage.value = 'Select at least one available day.'; return }
   if (!form.availableTimeSlots.length) { errorMessage.value = 'Select at least one time slot.'; return }
-
   loading.value = true
   try {
     const token = localStorage.getItem('token')
@@ -146,67 +135,73 @@ const handleSubmit = async () => {
     successMessage.value = 'Lesson created successfully!'
     Object.assign(form, { title: '', description: '', instrument: '', level: 'beginner', duration: 60, price: 0, maxStudents: 1, availableDays: [], availableTimeSlots: [], isOnline: true, location: '' })
     setTimeout(() => router.push('/dashboard/tutor/lessons'), 1500)
-  } catch (e: any) {
-    errorMessage.value = e.message
-  } finally {
-    loading.value = false
-  }
+  } catch (e: any) { errorMessage.value = e.message }
+  finally { loading.value = false }
 }
 </script>
 
 <style scoped>
-.page { max-width: 860px; }
-.page-header { margin-bottom: 24px; }
-.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }
-.page-subtitle { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
+.page { max-width: 860px; padding: 1.75rem 2rem; }
+.page-header { margin-bottom: 1.5rem; }
+.page-title { font-family: 'DM Serif Display', serif; font-size: 1.875rem; font-weight: 400; color: var(--mm-ivory); margin: 0 0 0.25rem; letter-spacing: -0.02em; }
+.page-subtitle { font-size: 0.9375rem; color: var(--mm-sand); margin: 0; }
 
-.form-card { background: white; border: 2px solid #DEACF5; border-radius: 16px; padding: 32px; box-shadow: 0 4px 16px rgba(151,84,203,0.08); }
+.form-card { background: var(--mm-onyx); border: 1px solid var(--mm-warm-line); border-radius: 1rem; padding: 2rem; }
 
-.alert { padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; margin-bottom: 20px; }
-.alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-.alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.alert { padding: 0.75rem 1rem; border-radius: 0.625rem; font-size: 0.875rem; font-weight: 600; margin-bottom: 1.25rem; }
+.alert-success { background: rgba(56,168,130,0.12); color: var(--mm-emerald); border: 1px solid rgba(56,168,130,0.25); }
+.alert-error   { background: rgba(224,112,96,0.12); color: var(--mm-coral);   border: 1px solid rgba(224,112,96,0.25); }
 
-.form { display: flex; flex-direction: column; gap: 28px; }
-.form-section { display: flex; flex-direction: column; gap: 16px; }
-.section-title { font-size: 16px; font-weight: 700; color: #6237A0; margin: 0 0 4px; padding-bottom: 10px; border-bottom: 2px solid rgba(151,84,203,0.12); }
+.form { display: flex; flex-direction: column; gap: 2rem; }
+.form-section { display: flex; flex-direction: column; gap: 1.125rem; }
+.section-title { font-family: 'DM Serif Display', serif; font-size: 1rem; font-weight: 400; color: var(--mm-gold); margin: 0 0 0.25rem; padding-bottom: 0.625rem; border-bottom: 1px solid var(--mm-warm-line); letter-spacing: 0.01em; }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
-.label { font-size: 13px; font-weight: 600; color: #ffffff; }
-.req { color: #e53e3e; }
+.field { display: flex; flex-direction: column; gap: 0.375rem; }
+.label { font-size: 0.8125rem; font-weight: 600; color: var(--mm-sand); }
+.req { color: var(--mm-coral); }
 .input {
-  padding: 10px 14px; border: 1.5px solid rgba(151,84,203,0.2); border-radius: 8px;
-  font-size: 14px; color: #1b1030; background: white; width: 100%;
-  transition: border-color 0.2s; outline: none;
+  padding: 0.625rem 0.875rem;
+  background: var(--mm-mist);
+  border: 1px solid var(--mm-warm-line);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--mm-ivory);
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
 }
-.input:focus { border-color: #9754CB; box-shadow: 0 0 0 3px rgba(151,84,203,0.1); }
+.input::placeholder { color: var(--mm-stone); }
+.input:focus { border-color: var(--mm-gold); box-shadow: 0 0 0 3px rgba(212,168,83,0.12); }
 .textarea { resize: vertical; min-height: 100px; }
-select.input { color: #ffffff; }
+select.input { color: var(--mm-ivory); cursor: pointer; }
 
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.mt-3 { margin-top: 8px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.mt-3 { margin-top: 0.5rem; }
 
-.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip-group-lg .chip { min-width: 90px; }
+.chip-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip-group-lg .chip { min-width: 88px; }
 .chip {
-  padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
-  border: 1.5px solid rgba(151,84,203,0.25); background: white; color: #6237A0;
-  transition: all 0.15s;
+  padding: 0.5rem 0.875rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+  background: var(--mm-mist); border: 1px solid var(--mm-warm-line); color: var(--mm-sand);
+  transition: all 0.15s; font-family: 'DM Sans', sans-serif;
 }
-.chip:hover { border-color: #9754CB; background: rgba(151,84,203,0.05); }
-.chip-active { background: #9754CB; color: white; border-color: #9754CB; }
+.chip:hover { border-color: var(--mm-gold); color: var(--mm-ivory); }
+.chip-active { background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink); border-color: transparent; }
 
-.radio-group { display: flex; gap: 24px; }
-.radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #ffffff; cursor: pointer; }
-.radio { accent-color: #9754CB; width: 16px; height: 16px; }
+.radio-group { display: flex; gap: 1.5rem; }
+.radio-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; color: var(--mm-ivory); cursor: pointer; }
+.radio { accent-color: var(--mm-gold); width: 16px; height: 16px; }
 
 .submit-btn {
-  padding: 14px; background: linear-gradient(90deg,#9754CB,#6237A0); color: white;
-  border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;
-  transition: all 0.2s; box-shadow: 0 4px 14px rgba(151,84,203,0.3);
+  padding: 0.875rem 2rem; background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink);
+  border: none; border-radius: 0.625rem; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+  transition: all 0.2s; box-shadow: 0 4px 16px rgba(212,168,83,0.25); align-self: flex-start;
+  font-family: 'DM Sans', sans-serif;
 }
-.submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(151,84,203,0.35); }
-.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(212,168,83,0.35); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-@media (max-width: 700px) { .grid-4 { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 480px) { .grid-4 { grid-template-columns: 1fr; } .form-card { padding: 20px; } }
+@media (max-width: 700px) { .grid-4 { grid-template-columns: 1fr 1fr; } .page { padding: 1.25rem; } }
+@media (max-width: 480px) { .grid-4 { grid-template-columns: 1fr; } .form-card { padding: 1.25rem; } }
 </style>

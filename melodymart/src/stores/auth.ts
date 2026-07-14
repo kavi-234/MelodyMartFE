@@ -10,7 +10,13 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
   const requiresProfileCompletion = computed(() => !user.value?.role || user.value?.role === 'customer' && !user.value?.profileCompleted)
   const isPendingApproval = computed(() => user.value?.verificationStatus === 'PENDING_APPROVAL' && (user.value?.role === 'tutor' || user.value?.role === 'repair_specialist'))
-  const isApproved = computed(() => user.value?.verificationStatus === 'APPROVED' && user.value?.isVerified)
+  const isApproved = computed(() => {
+    if (!user.value) return false
+    if (user.value.verificationStatus === 'APPROVED' && user.value.isVerified) return true
+    // Fallback: no verificationStatus yet (e.g. right after email login before refresh), trust isVerified
+    if (!user.value.verificationStatus && user.value.isVerified) return true
+    return false
+  })
   const isRejected = computed(() => user.value?.verificationStatus === 'REJECTED')
 
   async function googleLogin(googleToken: string) {
@@ -120,19 +126,44 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchMyLessonsCount() {
     if (!token.value) return
     try {
-      const res = await fetch('http://localhost:5000/api/lessons/student/my-lessons', {
+      const res = await fetch('http://localhost:5000/api/lessons/my-lessons', {
         headers: { 'Authorization': `Bearer ${token.value}` }
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        // Endpoint doesn't exist, just set to 0
+        myLessonsCount.value = 0
+        return
+      }
       const data = await res.json()
       myLessonsCount.value = Array.isArray(data.lessons) ? data.lessons.length : 0
     } catch (e) {
       console.error('Failed to fetch my lessons count', e)
+      myLessonsCount.value = 0
     }
   }
 
   function incrementMyLessonsCount() {
     myLessonsCount.value = (myLessonsCount.value || 0) + 1
+  }
+
+  async function refreshUserData() {
+    if (!token.value) return
+    try {
+      // /api/me returns { user: {...} } from the real backend
+      const res = await fetch('http://localhost:5000/api/me', {
+        headers: { 'Authorization': `Bearer ${token.value}` }
+      })
+      if (!res.ok) {
+        console.warn('Failed to refresh user data')
+        return
+      }
+      const data = await res.json()
+      const userData = data.user || data
+      user.value = userData
+      localStorage.setItem('user', JSON.stringify(userData))
+    } catch (e) {
+      console.error('Failed to refresh user data', e)
+    }
   }
 
   function logout() {
@@ -156,6 +187,7 @@ export const useAuthStore = defineStore('auth', () => {
     googleLogin,
     completeProfile,
     refreshUser,
+    refreshUserData,
     fetchMyLessonsCount,
     incrementMyLessonsCount,
     logout

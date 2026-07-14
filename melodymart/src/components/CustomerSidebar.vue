@@ -1,279 +1,362 @@
 <template>
-  <aside :class="['customer-sidebar', { open: isOpen, collapsed: collapsed }]">
-    <div class="sidebar-inner">
+  <aside :class="['mm-sidebar', { 'is-open': isOpen, 'is-collapsed': collapsed }]">
 
-      <nav class="menu">
-        <RouterLink v-for="item in items" :key="item.path" :to="item.path" class="menu-item" :class="{ active: isActive(item.path) }" @click="onMenuClick(item)">
-          <span class="icon" v-html="item.icon"></span>
-          <span class="label">{{ item.label }}</span>
-          <span v-if="item.path.endsWith('/lessons') && myLessonsCount" class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full lesson-badge">{{ myLessonsCount }}</span>
+    <!-- Sidebar inner -->
+    <div class="mm-sidebar-inner">
+
+      <!-- Nav -->
+      <nav class="mm-sidebar-nav">
+        <RouterLink
+          v-for="item in items"
+          :key="item.path"
+          :to="item.path"
+          class="mm-nav-item"
+          :class="{ 'is-active': isActive(item.path) }"
+          @click="onMenuClick(item)"
+        >
+          <span class="nav-icon" v-html="item.icon" />
+          <span v-if="!collapsed" class="nav-label">{{ item.label }}</span>
+          <span
+            v-if="!collapsed && item.path.endsWith('/lessons') && myLessonsCount"
+            class="nav-badge"
+          >{{ myLessonsCount }}</span>
         </RouterLink>
       </nav>
 
-      <div class="spacer"></div>
-      <div class="profile bottom-profile">
-        <img :src="avatarUrl" alt="avatar" class="avatar" />
+      <div class="flex-1" />
+
+      <!-- User profile -->
+      <div v-if="!collapsed" class="mm-sidebar-profile">
+        <img :src="avatarUrl" alt="avatar" class="profile-avatar" @error="handleAvatarError" />
         <div class="profile-info">
-          <div class="name">{{ user?.name || 'Guest' }}</div>
-          <div class="email">{{ user?.email || 'guest@melodymart.com' }}</div>
+          <div class="profile-name">{{ user?.name || 'Guest' }}</div>
+          <div class="profile-email">{{ user?.email || '' }}</div>
         </div>
       </div>
+      <div v-else class="flex justify-center py-3">
+        <img :src="avatarUrl" alt="avatar" class="w-9 h-9 rounded-full object-cover border border-mm-line" @error="handleAvatarError" />
+      </div>
 
-      <button class="logout" @click="handleLogout">Logout</button>
+      <!-- Logout -->
+      <button class="mm-logout-btn" @click="handleLogout">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span v-if="!collapsed">Sign Out</span>
+      </button>
     </div>
 
-    <!-- Mobile toggle button -->
-    <button class="mobile-toggle" @click="toggle">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Mobile toggle -->
+    <button class="mm-mobile-toggle" @click="toggle" aria-label="Toggle sidebar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6" stroke-linecap="round"/>
+        <line x1="3" y1="12" x2="21" y2="12" stroke-linecap="round"/>
+        <line x1="3" y1="18" x2="21" y2="18" stroke-linecap="round"/>
       </svg>
     </button>
 
-    <!-- overlay for mobile when open -->
-    <div v-if="isOpen" class="overlay" @click="close"></div>
+    <!-- Mobile overlay -->
+    <Transition name="fade">
+      <div v-if="isOpen" class="mm-overlay" @click="close" />
+    </Transition>
   </aside>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { onMounted } from 'vue'
 
 const props = defineProps({
   collapsed: { type: Boolean, default: false }
 })
+const emits = defineEmits(['compress', 'expand'])
 
 const isOpen = ref(false)
 const toggle = () => (isOpen.value = !isOpen.value)
-const close = () => (isOpen.value = false)
-const closeOnMobile = () => {
-  if (window.innerWidth < 768) close()
-}
+const close  = () => (isOpen.value = false)
+const closeOnMobile = () => { if (window.innerWidth < 768) close() }
 
-const router = useRouter()
-const route = useRoute()
+const router    = useRouter()
+const route     = useRoute()
 const authStore = useAuthStore()
 
-const user = computed(() => authStore.user)
+const user           = computed(() => authStore.user)
 const myLessonsCount = computed(() => authStore.myLessonsCount || 0)
+const avatarUrl      = computed(() => authStore.user?.avatar || '')
 
-onMounted(() => {
-  if (authStore.isAuthenticated) {
-    authStore.fetchMyLessonsCount()
-  }
-})
-const avatarUrl = computed(() => authStore.user?.avatar || '/assets/placeholders/avatar.png')
-
-const items = [
-  { label: 'Home', path: '/dashboard/customer/home', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.707a1 1 0 00-1.414 0L1 9v8a1 1 0 001 1h5a1 1 0 001-1v-5h2v5a1 1 0 001 1h5a1 1 0 001-1V9l-8.293-7.293z"/></svg>' },
-  { label: 'My Cart', path: '/dashboard/customer/cart', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.98-1.74L23 6H6"/></svg>' },
-  { label: 'Orders', path: '/dashboard/customer/orders', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3z"/><path d="M3 11h18v10H3z"/></svg>' },
-  { label: 'Lessons', path: '/dashboard/customer/lessons', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8"/></svg>' },
-  { label: 'Requested Services', path: '/dashboard/customer/services', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4L19 22l-7-4-7 4 1.5-9L3 9h7z"/></svg>' },
-  { label: 'Settings', path: '/dashboard/customer/settings', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06A2 2 0 112.27 17.9l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09c.66 0 1.25-.44 1.51-1a1.65 1.65 0 00-.33-1.82L3.3 5.6A2 2 0 115.6 2.27l.06.06A1.65 1.65 0 007.48 2a1.65 1.65 0 001 .15H9a2 2 0 110 4h-.09c-.66 0-1.25.44-1.51 1A1.65 1.65 0 007.48 9l.06.06A2 2 0 119.73 11.3l-.06.06c-.48.48-.73 1.12-.73 1.76v.09a2 2 0 110 4v-.09c0-.64.25-1.28.73-1.76l.06-.06A2 2 0 1114.27 12.7l-.06.06c.48.48.73 1.12.73 1.76v.09a2 2 0 110 4v-.09c0-.64.25-1.28.73-1.76l.06-.06A2 2 0 1119.4 15z"/></svg>' }
-]
-
-const emits = defineEmits(['compress', 'expand'])
-
-const isActive = (path) => {
-  return route.path === path || route.path.startsWith(path)
+const handleAvatarError = (e) => {
+  e.target.style.display = 'none'
 }
 
-const routerInstance = router
+onMounted(() => {
+  if (authStore.isAuthenticated) authStore.fetchMyLessonsCount()
+})
+
+const items = [
+  {
+    label: 'Dashboard',
+    path:  '/dashboard/customer',
+    icon:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+  },
+  {
+    label: 'My Cart',
+    path:  '/dashboard/customer/cart',
+    icon:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+  },
+  {
+    label: 'Orders',
+    path:  '/dashboard/customer/orders',
+    icon:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  },
+  {
+    label: 'Lessons',
+    path:  '/dashboard/customer/lessons',
+    icon:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+  },
+  {
+    label: 'Repair Services',
+    path:  '/dashboard/customer/services',
+    icon:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>`,
+  },
+  {
+    label: 'Messages',
+    path:  '/messages',
+    icon:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`,
+  },
+  {
+    label: 'Settings',
+    path:  '/dashboard/customer/settings',
+    icon:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+  },
+]
+
+const isActive = (path) => route.path === path || (path !== '/dashboard/customer' && route.path.startsWith(path))
 
 const onMenuClick = (item) => {
-  // compress when navigating to dashboard embedded home, expand otherwise
-  if (item.path === '/dashboard/customer/home') {
-    emits('compress')
-  } else {
-    emits('expand')
-  }
   closeOnMobile()
+  emits('expand')
 }
 
 const handleLogout = () => {
   authStore.logout()
-  routerInstance.push('/')
+  router.push('/')
 }
 </script>
 
 <style scoped>
-:root {
-  --p-900: #28104E;
-  --p-700: #6237A0;
-  --p-500: #9754CB;
-  --p-300: #DEACF5;
-  --p-50: #FBF7FF;
-}
-
-.customer-sidebar {
+.mm-sidebar {
   position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
+  left: 0; top: 57px;
+  height: calc(100vh - 57px);
   width: 250px;
-  background: linear-gradient(180deg, var(--p-300), var(--p-50));
-  background-blend-mode: overlay;
-  box-shadow: 0 10px 30px rgba(98,55,160,0.06);
   z-index: 60;
   transform: translateX(-100%);
-  transition: transform 0.28s ease, width 0.2s ease;
-  border-right: 1px solid rgba(167,139,250,0.06);
+  transition: transform 0.28s ease, width 0.22s ease;
 }
+.mm-sidebar.is-collapsed { width: 72px; }
+.mm-sidebar.is-open { transform: translateX(0); }
 
-.customer-sidebar.collapsed {
-  width: 72px;
-  background: linear-gradient(180deg, rgba(98,55,160,0.06), rgba(40,16,60,0.04));
-  backdrop-filter: blur(4px);
-}
-
-.customer-sidebar.open {
-  transform: translateX(0);
-}
-
-.sidebar-inner {
-  display: flex;
-  flex-direction: column;
+.mm-sidebar-inner {
   height: 100%;
-  padding: 20px;
-  padding-top: 56px; /* push menu down so it doesn't overlap header/logo */
-}
-
-.profile {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(167,139,250,0.06);
-}
-
-.bottom-profile {
-  margin-bottom: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(167,139,250,0.04);
-}
-
-.avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 9999px;
-  object-fit: cover;
-}
-
-.avatar {
-  background: linear-gradient(135deg,var(--p-500),var(--p-300));
-  border: 3px solid rgba(255,255,255,0.85);
-  box-shadow: 0 6px 18px rgba(98,55,160,0.12);
-}
-
-.customer-sidebar.collapsed .avatar {
-  width: 40px;
-  height: 40px;
-}
-
-.profile-info .name {
-  font-weight: 700;
-  color: var(--p-900);
-}
-
-.profile-info .email {
-  font-size: 12px;
-  color: rgba(40,16,60,0.7);
-}
-
-.menu {
-  margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  background: var(--mm-carbon);
+  border-right: 1px solid var(--mm-warm-line);
+  padding: 0;
+  overflow: hidden;
 }
 
-.menu-item {
+/* Logo area */
+.mm-sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: var(--p-900);
-  text-decoration: none;
-  transition: background 0.18s ease, transform 0.12s ease;
-}
-
-.menu-item:hover {
-  background: linear-gradient(90deg, rgba(151,84,203,0.06), rgba(222,172,245,0.04));
-  transform: translateX(4px);
-}
-
-.menu-item .icon {
-  display: inline-flex;
-  width: 20px;
-  height: 20px;
-}
-
-.menu-item .label { font-size: 15px; }
-
-.lesson-badge {
-  background: linear-gradient(90deg,var(--p-500),var(--p-300));
-  color: white;
-}
-
-.customer-sidebar.collapsed .label {
-  display: none;
-}
-
-.customer-sidebar.collapsed .profile-info {
-  display: none;
-}
-
-.menu-item.active {
-  background: linear-gradient(90deg, rgba(151,84,203,0.12), rgba(222,172,245,0.08));
-  color: var(--p-700);
-  font-weight: 700;
-  box-shadow: inset 4px 0 0 var(--p-500);
-}
-
-.spacer {
-  flex: 1 1 auto;
-}
-
-.logout {
-  width: 100%;
-  padding: 10px 12px;
-  background: linear-gradient(90deg, #ff6b6b, #ff4d4d); /* visible contrasting red */
-  color: white;
-  border: none;
-  border-radius: 10px;
+  gap: 0.75rem;
+  padding: 1.25rem 1rem 1rem;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(255,77,77,0.12);
+  border-bottom: 1px solid var(--mm-warm-line);
+  min-height: 60px;
+}
+.logo-mark {
+  position: relative;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper));
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-ring {
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(9,8,12,0.4);
+}
+.logo-dot {
+  position: absolute;
+  inset: 42%;
+  border-radius: 50%;
+  background: rgba(9,8,12,0.5);
+}
+.logo-text {
+  font-size: 1rem;
+  color: var(--mm-ivory);
+  letter-spacing: -0.01em;
 }
 
-.mobile-toggle {
-  position: fixed;
-  left: 12px;
-  top: 12px;
-  background: linear-gradient(90deg,var(--p-500),var(--p-300));
-  color: white;
-  border: none;
-  padding: 8px;
-  border-radius: 8px;
+/* Nav */
+.mm-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.75rem 0.6rem;
+  flex: 0 0 auto;
+}
+.mm-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.65rem;
+  color: var(--mm-sand);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+}
+.mm-nav-item:hover {
+  background: var(--mm-onyx);
+  color: var(--mm-ivory);
+}
+.mm-nav-item.is-active {
+  background: rgba(212,168,83,0.1);
+  color: var(--mm-gold-lt);
+  border: 1px solid rgba(212,168,83,0.15);
+}
+.mm-nav-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 2.5px;
+  background: var(--mm-gold);
+  border-radius: 0 2px 2px 0;
+}
+.nav-icon {
   display: inline-flex;
-  z-index: 70;
-  box-shadow: 0 6px 18px rgba(151,84,203,0.12);
+  flex-shrink: 0;
+  width: 18px; height: 18px;
+}
+.nav-label { flex: 1; }
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--mm-gold);
+  color: var(--mm-ink);
+  border-radius: 2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
-.overlay {
+/* Profile */
+.mm-sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-top: 1px solid var(--mm-warm-line);
+  margin: 0 0.4rem;
+  border-radius: 0.75rem;
+}
+.profile-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: linear-gradient(135deg, var(--mm-gold-dk), var(--mm-copper));
+  flex-shrink: 0;
+}
+.profile-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--mm-ivory);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-email {
+  font-size: 0.7rem;
+  color: var(--mm-stone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Logout */
+.mm-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: calc(100% - 1.2rem);
+  margin: 0.4rem 0.6rem 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(224,112,96,0.15);
+  background: transparent;
+  color: rgba(224,112,96,0.7);
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.mm-logout-btn:hover {
+  background: rgba(224,112,96,0.08);
+  border-color: rgba(224,112,96,0.3);
+  color: #E07060;
+}
+
+/* Mobile toggle */
+.mm-mobile-toggle {
+  position: fixed;
+  left: 12px; top: 12px;
+  z-index: 70;
+  display: none;
+  width: 38px; height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: var(--mm-carbon);
+  border: 1px solid var(--mm-warm-line);
+  color: var(--mm-sand);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.mm-mobile-toggle:hover { color: var(--mm-gold-lt); }
+
+/* Overlay */
+.mm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(40,16,60,0.06);
+  background: rgba(9,8,12,0.7);
   z-index: 50;
+  backdrop-filter: blur(2px);
 }
 
-/* Desktop: keep visible */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
 @media (min-width: 768px) {
-  .customer-sidebar {
-    transform: translateX(0);
-  }
-  .mobile-toggle { display: none; }
+  .mm-sidebar { transform: translateX(0); }
+  .mm-mobile-toggle { display: none; }
+}
+@media (max-width: 767px) {
+  .mm-sidebar { top: 0; height: 100vh; }
+  .mm-mobile-toggle { display: flex; }
 }
 </style>

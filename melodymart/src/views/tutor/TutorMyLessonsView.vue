@@ -1,30 +1,32 @@
 <template>
   <div class="page">
     <div class="page-header">
-      <div><h1 class="page-title">My Lessons</h1><p class="page-subtitle">Manage your lessons — edit, deactivate, or delete.</p></div>
+      <div>
+        <h1 class="page-title">My Lessons</h1>
+        <p class="page-subtitle">Manage your lessons — edit, deactivate, or delete.</p>
+      </div>
       <RouterLink to="/dashboard/tutor/create-lesson" class="create-btn">+ Create Lesson</RouterLink>
     </div>
 
-    <div v-if="loading" class="loading-state"><div class="spinner"></div><p>Loading lessons...</p></div>
-    <div v-else-if="error" class="error-state"><span>⚠️</span><p>{{ error }}</p><button @click="fetchLessons" class="retry-btn">Try Again</button></div>
+    <div v-if="loading" class="state-box"><div class="spinner"></div><p>Loading lessons...</p></div>
+    <div v-else-if="error" class="state-box"><span class="state-icon">⚠</span><p>{{ error }}</p><button @click="fetchLessons" class="retry-btn">Try Again</button></div>
 
-    <div v-else-if="lessons.length === 0" class="empty-state">
-      <div class="empty-icon">📚</div>
-      <h3>No lessons yet</h3>
-      <p>Create your first lesson and start teaching students.</p>
+    <div v-else-if="lessons.length === 0" class="state-box">
+      <div style="font-size:3rem">📚</div>
+      <h3 class="empty-title">No lessons yet</h3>
+      <p class="empty-sub">Create your first lesson and start teaching students.</p>
       <RouterLink to="/dashboard/tutor/create-lesson" class="create-btn">Create Your First Lesson</RouterLink>
     </div>
 
     <div v-else class="lessons-list">
       <div v-for="lesson in lessons" :key="lesson._id" class="lesson-card">
-        <!-- View Mode -->
         <template v-if="editingId !== lesson._id">
           <div class="lesson-header">
             <div class="lesson-meta">
               <h3 class="lesson-title">{{ lesson.title }}</h3>
               <p class="lesson-desc">{{ lesson.description }}</p>
               <div class="lesson-tags">
-                <span class="tag tag-instrument">🎵 {{ lesson.instrument }}</span>
+                <span class="tag tag-instrument">♪ {{ lesson.instrument }}</span>
                 <span class="tag" :class="levelClass(lesson.level)">{{ lesson.level }}</span>
                 <span class="tag tag-neutral">{{ lesson.isOnline ? '🌐 Online' : '📍 In-Person' }}</span>
                 <span class="tag" :class="lesson.isActive ? 'tag-green' : 'tag-grey'">{{ lesson.isActive ? '✓ Active' : '✕ Inactive' }}</span>
@@ -47,7 +49,6 @@
           </div>
         </template>
 
-        <!-- Edit Mode -->
         <template v-else>
           <h3 class="edit-title">Editing: {{ lesson.title }}</h3>
           <div class="edit-form">
@@ -116,8 +117,7 @@ const fetchLessons = async () => {
     const token = localStorage.getItem('token')
     const res = await fetch('http://localhost:5000/api/lessons/tutor/my-lessons', { headers: { Authorization: `Bearer ${token}` } })
     if (!res.ok) throw new Error('Failed to load lessons')
-    const data = await res.json()
-    lessons.value = data.lessons || []
+    const data = await res.json(); lessons.value = data.lessons || []
   } catch (e: any) { error.value = e.message }
   finally { loading.value = false }
 }
@@ -137,7 +137,6 @@ const startEdit = (lesson: any) => {
   Object.assign(editForm, { ...lesson, availableDays: [...lesson.availableDays], availableTimeSlots: [...lesson.availableTimeSlots], location: lesson.location || '' })
 }
 const cancelEdit = () => { editingId.value = null }
-
 const toggleDay = (d: string) => { const i = editForm.availableDays.indexOf(d); i > -1 ? editForm.availableDays.splice(i, 1) : editForm.availableDays.push(d) }
 const toggleSlot = (s: string) => { const i = editForm.availableTimeSlots.indexOf(s); i > -1 ? editForm.availableTimeSlots.splice(i, 1) : editForm.availableTimeSlots.push(s) }
 
@@ -146,8 +145,7 @@ const saveEdit = async () => {
   try {
     const token = localStorage.getItem('token')
     const res = await fetch(`http://localhost:5000/api/lessons/${editingId.value}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ ...editForm }),
     })
     if (!res.ok) { const d = await res.json(); throw new Error(d.message) }
@@ -160,84 +158,79 @@ const saveEdit = async () => {
 }
 
 const levelClass = (l: string) => ({ 'tag-green': l === 'beginner', 'tag-amber': l === 'intermediate', 'tag-red': l === 'advanced' })
-
 onMounted(fetchLessons)
 </script>
 
 <style scoped>
-.page { max-width: 1100px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }
-.page-subtitle { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
-.create-btn { padding: 10px 20px; background: linear-gradient(90deg,#9754CB,#DEACF5); color: white; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; }
+.page { max-width: 1100px; padding: 1.75rem 2rem; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.page-title { font-family: 'DM Serif Display', serif; font-size: 1.875rem; font-weight: 400; color: var(--mm-ivory); margin: 0 0 0.25rem; letter-spacing: -0.02em; }
+.page-subtitle { font-size: 0.9375rem; color: var(--mm-sand); margin: 0; }
+.create-btn { padding: 0.625rem 1.25rem; background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink); border-radius: 0.5rem; font-weight: 700; font-size: 0.875rem; text-decoration: none; white-space: nowrap; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(212,168,83,0.2); display: inline-block; }
+.create-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(212,168,83,0.3); }
 
-.loading-state,.error-state { display: flex; flex-direction: column; align-items: center; padding: 60px 20px; gap: 12px; text-align: center; }
-.spinner { width: 44px; height: 44px; border: 4px solid rgba(151,84,203,0.1); border-top-color: #9754CB; border-radius: 50%; animation: spin 1s linear infinite; }
+.state-box { display: flex; flex-direction: column; align-items: center; padding: 4rem 1.25rem; gap: 0.75rem; text-align: center; }
+.spinner { width: 42px; height: 42px; border: 3px solid var(--mm-warm-line); border-top-color: var(--mm-gold); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-state p,.error-state p { color: rgba(255,255,255,0.8); font-size: 14px; }
-.retry-btn { padding: 9px 20px; background: #9754CB; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.state-box p { color: var(--mm-sand); font-size: 0.875rem; margin: 0; }
+.state-icon { font-size: 1.5rem; }
+.empty-title { font-size: 1.25rem; font-weight: 700; color: var(--mm-ivory); margin: 0; }
+.empty-sub { color: var(--mm-sand); margin: 0; font-size: 0.875rem; }
+.retry-btn { padding: 0.5625rem 1.25rem; background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink); border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
 
-.empty-state { display: flex; flex-direction: column; align-items: center; padding: 80px 20px; gap: 12px; text-align: center; }
-.empty-icon { font-size: 52px; }
-.empty-state h3 { font-size: 20px; font-weight: 700; color: #ffffff; margin: 0; }
-.empty-state p { color: rgba(255,255,255,0.7); margin: 0; font-size: 14px; }
+.lessons-list { display: flex; flex-direction: column; gap: 1rem; }
+.lesson-card { background: var(--mm-onyx); border: 1px solid var(--mm-warm-line); border-radius: 0.875rem; padding: 1.375rem; transition: border-color 0.2s; }
+.lesson-card:hover { border-color: var(--mm-stone); }
 
-.lessons-list { display: flex; flex-direction: column; gap: 16px; }
-.lesson-card { background: white; border: 2px solid #DEACF5; border-radius: 14px; padding: 22px; box-shadow: 0 4px 12px rgba(151,84,203,0.07); transition: border-color 0.2s; }
-.lesson-card:hover { border-color: #9754CB; }
+.lesson-header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.875rem; }
+.lesson-title { font-size: 1.0625rem; font-weight: 700; color: var(--mm-ivory); margin: 0 0 0.375rem; }
+.lesson-desc { font-size: 0.8125rem; color: var(--mm-sand); margin: 0 0 0.625rem; line-height: 1.5; }
+.lesson-tags { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.tag { padding: 0.1875rem 0.625rem; border-radius: 20px; font-size: 0.6875rem; font-weight: 700; }
+.tag-instrument { background: rgba(212,168,83,0.1); color: var(--mm-gold); border: 1px solid rgba(212,168,83,0.2); }
+.tag-neutral { background: var(--mm-mist); color: var(--mm-sand); border: 1px solid var(--mm-warm-line); }
+.tag-green { background: rgba(56,168,130,0.12); color: var(--mm-emerald); border: 1px solid rgba(56,168,130,0.25); }
+.tag-amber { background: rgba(212,168,83,0.12);  color: var(--mm-gold);    border: 1px solid rgba(212,168,83,0.25); }
+.tag-red   { background: rgba(224,112,96,0.12);  color: var(--mm-coral);   border: 1px solid rgba(224,112,96,0.25); }
+.tag-grey  { background: var(--mm-mist); color: var(--mm-stone); border: 1px solid var(--mm-warm-line); }
 
-.lesson-header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
-.lesson-title { font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 6px; }
-.lesson-desc { font-size: 13px; color: rgba(255,255,255,0.7); margin: 0 0 10px; line-height: 1.5; }
-.lesson-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-.tag-instrument { background: rgba(151,84,203,0.08); color: #6237A0; border: 1px solid rgba(151,84,203,0.2); }
-.tag-neutral { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-.tag-green { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-.tag-amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-.tag-red { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-.tag-grey { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+.lesson-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+.btn-edit { padding: 0.5rem 1.125rem; background: rgba(212,168,83,0.08); color: var(--mm-gold); border: 1px solid rgba(212,168,83,0.2); border-radius: 0.5rem; font-weight: 700; font-size: 0.8125rem; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.btn-edit:hover { background: rgba(212,168,83,0.15); }
+.btn-delete { padding: 0.5rem 1.125rem; background: rgba(224,112,96,0.08); color: var(--mm-coral); border: 1px solid rgba(224,112,96,0.2); border-radius: 0.5rem; font-weight: 700; font-size: 0.8125rem; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.btn-delete:hover { background: rgba(224,112,96,0.15); }
 
-.lesson-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.btn-edit { padding: 8px 18px; background: rgba(151,84,203,0.1); color: #6237A0; border: 1.5px solid rgba(151,84,203,0.25); border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-.btn-edit:hover { background: rgba(151,84,203,0.18); }
-.btn-delete { padding: 8px 18px; background: #fee2e2; color: #dc2626; border: 1.5px solid #fca5a5; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-.btn-delete:hover { background: #fecaca; }
-
-.lesson-stats { display: flex; gap: 24px; flex-wrap: wrap; padding: 14px 0; border-top: 1px solid rgba(151,84,203,0.08); border-bottom: 1px solid rgba(151,84,203,0.08); }
+.lesson-stats { display: flex; gap: 1.5rem; flex-wrap: wrap; padding: 0.875rem 0; border-top: 1px solid var(--mm-warm-line); border-bottom: 1px solid var(--mm-warm-line); }
 .stat { display: flex; flex-direction: column; gap: 2px; }
-.stat-label { font-size: 10px; font-weight: 700; color: #9754CB; text-transform: uppercase; }
-.stat-val { font-size: 15px; font-weight: 700; color: #ffffff; }
-.stat-val.price { color: #9754CB; }
+.stat-label { font-size: 0.625rem; font-weight: 700; color: var(--mm-stone); text-transform: uppercase; letter-spacing: 0.04em; }
+.stat-val { font-size: 0.9375rem; font-weight: 700; color: var(--mm-ivory); }
+.stat-val.price { color: var(--mm-gold); }
 
-.lesson-days { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
-.days-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
-.day-chip { padding: 3px 10px; background: rgba(151,84,203,0.08); color: #6237A0; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid rgba(151,84,203,0.2); }
+.lesson-days { display: flex; flex-wrap: wrap; gap: 0.375rem; align-items: center; margin-top: 0.75rem; }
+.days-label { font-size: 0.6875rem; font-weight: 700; color: var(--mm-stone); text-transform: uppercase; letter-spacing: 0.04em; }
+.day-chip { padding: 0.1875rem 0.625rem; background: rgba(212,168,83,0.08); color: var(--mm-gold); border-radius: 20px; font-size: 0.6875rem; font-weight: 600; border: 1px solid rgba(212,168,83,0.15); }
 
-/* Edit form */
-.edit-title { font-size: 16px; font-weight: 700; color: #6237A0; margin: 0 0 16px; }
-.edit-form { display: flex; flex-direction: column; gap: 14px; }
-.edit-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.edit-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.label { font-size: 12px; font-weight: 600; color: #ffffff; }
-.input { padding: 9px 12px; border: 1.5px solid rgba(151,84,203,0.2); border-radius: 8px; font-size: 13px; color: #1b1030; background: white; outline: none; width: 100%; }
-.input:focus { border-color: #9754CB; }
+.edit-title { font-size: 1rem; font-weight: 700; color: var(--mm-ivory); margin: 0 0 1rem; }
+.edit-form { display: flex; flex-direction: column; gap: 0.875rem; }
+.edit-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+.edit-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.875rem; }
+.field { display: flex; flex-direction: column; gap: 0.3125rem; }
+.label { font-size: 0.75rem; font-weight: 600; color: var(--mm-sand); }
+.input { padding: 0.5625rem 0.75rem; background: var(--mm-mist); border: 1px solid var(--mm-warm-line); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--mm-ivory); outline: none; width: 100%; font-family: 'DM Sans', sans-serif; transition: border-color 0.2s; }
+.input::placeholder { color: var(--mm-stone); }
+.input:focus { border-color: var(--mm-gold); box-shadow: 0 0 0 3px rgba(212,168,83,0.1); }
 .textarea { resize: vertical; min-height: 80px; }
-.chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid rgba(151,84,203,0.2); background: white; color: #6237A0; }
-.chip:hover { border-color: #9754CB; }
-.chip-active { background: #9754CB; color: white; border-color: #9754CB; }
-.toggle-row { display: flex; gap: 24px; flex-wrap: wrap; }
-.toggle-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #ffffff; cursor: pointer; }
-.toggle-cb { accent-color: #9754CB; width: 15px; height: 15px; }
-.edit-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 4px; }
-.btn-cancel { padding: 9px 20px; background: rgba(151,84,203,0.08); color: #6237A0; border: 1.5px solid rgba(151,84,203,0.2); border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }
-.btn-save { padding: 9px 24px; background: linear-gradient(90deg,#9754CB,#6237A0); color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }
-.btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+.chip-group { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.chip { padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid var(--mm-warm-line); background: var(--mm-mist); color: var(--mm-sand); transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+.chip:hover { border-color: var(--mm-gold); color: var(--mm-ivory); }
+.chip-active { background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink); border-color: transparent; }
+.toggle-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.toggle-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: var(--mm-ivory); cursor: pointer; }
+.toggle-cb { accent-color: var(--mm-gold); width: 15px; height: 15px; }
+.edit-actions { display: flex; gap: 0.625rem; justify-content: flex-end; padding-top: 0.25rem; }
+.btn-cancel { padding: 0.5625rem 1.25rem; background: var(--mm-mist); color: var(--mm-sand); border: 1px solid var(--mm-warm-line); border-radius: 0.5rem; font-weight: 700; font-size: 0.8125rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-save { padding: 0.5625rem 1.5rem; background: linear-gradient(135deg, var(--mm-gold), var(--mm-copper)); color: var(--mm-ink); border: none; border-radius: 0.5rem; font-weight: 700; font-size: 0.8125rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
-@media (max-width: 768px) {
-  .lesson-header { flex-direction: column; }
-  .edit-grid-2,.edit-grid-4 { grid-template-columns: 1fr; }
-}
+@media (max-width: 768px) { .lesson-header { flex-direction: column; } .edit-grid-2,.edit-grid-4 { grid-template-columns: 1fr; } .page { padding: 1.25rem; } }
 </style>

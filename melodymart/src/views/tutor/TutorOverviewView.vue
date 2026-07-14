@@ -1,109 +1,102 @@
 <template>
-  <div class="overview-page">
-    <div class="page-header">
+  <div class="t-page">
+    <!-- Ambient glow -->
+    <div class="t-glow" aria-hidden="true" />
+
+    <!-- Header row -->
+    <div class="t-header">
       <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Welcome back, {{ authStore.user?.name }}!</p>
+        <p class="t-greeting">{{ greeting() }}</p>
+        <h1 class="t-title font-serif">{{ authStore.user?.name?.split(' ')[0] || 'Tutor' }}<span class="t-note"> ♪</span></h1>
+        <p class="t-sub">Here's your teaching activity at a glance.</p>
       </div>
-      <RouterLink to="/dashboard/tutor/create-lesson" class="create-btn">+ Create Lesson</RouterLink>
+      <RouterLink to="/dashboard/tutor/create-lesson" class="btn-primary flex items-center gap-2 text-sm px-5 py-2.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Create Lesson
+      </RouterLink>
     </div>
 
-    <!-- Stat Cards -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading dashboard...</p>
+    <!-- Loading -->
+    <div v-if="loading" class="t-loading">
+      <div class="t-spinner" />
+      <p class="text-mm-sand text-sm">Loading dashboard…</p>
     </div>
 
     <div v-else>
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-icon lessons-icon">📚</div>
-          <div class="stat-info">
-            <div class="stat-value">{{ stats.totalLessons }}</div>
-            <div class="stat-label">Total Lessons</div>
+      <!-- Stat cards -->
+      <div class="t-stat-grid">
+        <div class="t-stat-card" v-for="s in statCards" :key="s.label">
+          <div class="t-stat-icon" :style="{ background: s.bg }">
+            <span v-html="s.icon" />
           </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon bookings-icon">📅</div>
-          <div class="stat-info">
-            <div class="stat-value">{{ stats.totalBookings }}</div>
-            <div class="stat-label">Total Bookings</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon students-icon">👥</div>
-          <div class="stat-info">
-            <div class="stat-value">{{ stats.totalStudents }}</div>
-            <div class="stat-label">Total Students</div>
-          </div>
-        </div>
-        <div class="stat-card earnings-card">
-          <div class="stat-icon earnings-icon">💰</div>
-          <div class="stat-info">
-            <div class="stat-value">Rs {{ stats.totalEarnings.toLocaleString() }}</div>
-            <div class="stat-label">Total Earnings</div>
+          <div>
+            <div class="t-stat-value" :style="{ color: s.color }">{{ s.value }}</div>
+            <div class="t-stat-label">{{ s.label }}</div>
           </div>
         </div>
       </div>
 
-      <!-- Profile Info + Quick Links -->
-      <div class="two-col">
-        <!-- Profile Summary -->
-        <div class="card">
-          <h2 class="card-title">Profile Summary</h2>
-          <div class="profile-grid">
-            <div class="profile-item">
-              <span class="profile-label">Specialization</span>
-              <span class="profile-value">{{ authStore.user?.specialization || 'Not set' }}</span>
+      <!-- Profile + Quick Actions -->
+      <div class="t-two-col">
+        <!-- Profile summary -->
+        <div class="t-card">
+          <div class="t-card-header">
+            <h2 class="t-card-title font-serif">Profile Summary</h2>
+            <span class="t-status-chip" :class="statusChipClass">{{ statusLabel }}</span>
+          </div>
+          <div class="t-profile-grid">
+            <div class="t-profile-item">
+              <span class="t-profile-label">Specialization</span>
+              <span class="t-profile-value">{{ authStore.user?.specialization || '—' }}</span>
             </div>
-            <div class="profile-item">
-              <span class="profile-label">Experience</span>
-              <span class="profile-value">{{ authStore.user?.experience ? authStore.user.experience + ' years' : 'Not set' }}</span>
+            <div class="t-profile-item">
+              <span class="t-profile-label">Experience</span>
+              <span class="t-profile-value">{{ authStore.user?.experience ? authStore.user.experience + ' yrs' : '—' }}</span>
             </div>
-            <div class="profile-item">
-              <span class="profile-label">Hourly Rate</span>
-              <span class="profile-value">{{ authStore.user?.hourlyRate ? 'Rs ' + authStore.user.hourlyRate + '/hr' : 'Not set' }}</span>
+            <div class="t-profile-item">
+              <span class="t-profile-label">Hourly Rate</span>
+              <span class="t-profile-value">{{ authStore.user?.hourlyRate ? 'Rs ' + authStore.user.hourlyRate + '/hr' : '—' }}</span>
             </div>
-            <div class="profile-item">
-              <span class="profile-label">Status</span>
-              <span class="status-chip" :class="statusChipClass">{{ statusLabel }}</span>
+            <div class="t-profile-item">
+              <span class="t-profile-label">Verification</span>
+              <span class="t-profile-value" :style="{ color: statusColor }">{{ statusLabel }}</span>
             </div>
           </div>
-          <RouterLink to="/dashboard/tutor/profile" class="card-link">Edit Profile →</RouterLink>
+          <RouterLink to="/dashboard/tutor/profile" class="t-card-link">Edit Profile →</RouterLink>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="card">
-          <h2 class="card-title">Quick Actions</h2>
-          <div class="quick-actions">
-            <RouterLink to="/dashboard/tutor/create-lesson" class="quick-btn">
-              <span class="quick-icon">➕</span>
-              <span>Create New Lesson</span>
-            </RouterLink>
-            <RouterLink to="/dashboard/tutor/lessons" class="quick-btn">
-              <span class="quick-icon">📖</span>
-              <span>Manage Lessons</span>
-            </RouterLink>
-            <RouterLink to="/dashboard/tutor/bookings" class="quick-btn">
-              <span class="quick-icon">📋</span>
-              <span>View Bookings</span>
-            </RouterLink>
-            <RouterLink to="/dashboard/tutor/earnings" class="quick-btn">
-              <span class="quick-icon">💵</span>
-              <span>View Earnings</span>
+        <!-- Quick actions -->
+        <div class="t-card">
+          <h2 class="t-card-title font-serif">Quick Actions</h2>
+          <div class="t-quick-list">
+            <RouterLink v-for="a in quickActions" :key="a.path" :to="a.path" class="t-quick-btn">
+              <div class="t-quick-icon" :style="{ background: a.bg }">
+                <span v-html="a.icon" />
+              </div>
+              <div>
+                <div class="t-quick-label">{{ a.label }}</div>
+                <div class="t-quick-desc">{{ a.desc }}</div>
+              </div>
+              <svg class="t-quick-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>
             </RouterLink>
           </div>
         </div>
       </div>
 
-      <!-- Recent Activity -->
-      <div class="card mt-6">
-        <h2 class="card-title">Recent Bookings</h2>
-        <div v-if="recentBookings.length === 0" class="empty-activity">
-          <p>No bookings yet. Share your lessons to get started!</p>
+      <!-- Recent bookings -->
+      <div class="t-card t-mt">
+        <div class="t-card-header">
+          <h2 class="t-card-title font-serif">Recent Bookings</h2>
+          <RouterLink v-if="recentBookings.length > 0" to="/dashboard/tutor/bookings" class="t-card-link">View all →</RouterLink>
         </div>
-        <div v-else class="activity-table-wrap">
-          <table class="activity-table">
+
+        <div v-if="recentBookings.length === 0" class="t-empty">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--mm-stone); margin-bottom: 0.75rem;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p>No bookings yet. Publish your lessons to get students!</p>
+        </div>
+
+        <div v-else class="t-table-wrap">
+          <table class="t-table">
             <thead>
               <tr>
                 <th>Student</th>
@@ -114,22 +107,21 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="b in recentBookings" :key="b._id" class="activity-row">
+              <tr v-for="b in recentBookings" :key="b._id" class="t-row">
                 <td>
-                  <div class="student-cell">
-                    <div class="student-avatar">{{ getInitials(b.student?.name) }}</div>
+                  <div class="t-student">
+                    <div class="t-avatar">{{ getInitials(b.student?.name) }}</div>
                     <span>{{ b.student?.name || 'Unknown' }}</span>
                   </div>
                 </td>
-                <td class="lesson-name">{{ b.lesson?.title || '—' }}</td>
-                <td class="date-cell">{{ formatDate(b.createdAt) }}</td>
-                <td><span class="badge" :class="payBadge(b.paymentStatus)">{{ b.paymentStatus }}</span></td>
-                <td><span class="badge" :class="statusBadge(b.bookingStatus)">{{ b.bookingStatus }}</span></td>
+                <td class="t-lesson-name">{{ b.lesson?.title || '—' }}</td>
+                <td class="t-date">{{ formatDate(b.createdAt) }}</td>
+                <td><span class="t-badge" :class="payBadge(b.paymentStatus)">{{ b.paymentStatus }}</span></td>
+                <td><span class="t-badge" :class="statusBadge(b.bookingStatus)">{{ b.bookingStatus }}</span></td>
               </tr>
             </tbody>
           </table>
         </div>
-        <RouterLink v-if="recentBookings.length > 0" to="/dashboard/tutor/bookings" class="card-link mt-4 block">View all bookings →</RouterLink>
       </div>
     </div>
   </div>
@@ -140,9 +132,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 
 const authStore = useAuthStore()
-const loading = ref(true)
-const stats = ref({ totalLessons: 0, totalBookings: 0, totalStudents: 0, totalEarnings: 0 })
+const loading   = ref(true)
+const stats     = ref({ totalLessons: 0, totalBookings: 0, totalStudents: 0, totalEarnings: 0 })
 const recentBookings = ref<any[]>([])
+
+const greeting = () => {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
 const statusLabel = computed(() => {
   const s = authStore.user?.verificationStatus
@@ -152,10 +151,46 @@ const statusLabel = computed(() => {
 })
 const statusChipClass = computed(() => {
   const s = authStore.user?.verificationStatus
-  if (s === 'APPROVED') return 'chip-green'
-  if (s === 'REJECTED') return 'chip-red'
+  if (s === 'APPROVED') return 'chip-emerald'
+  if (s === 'REJECTED') return 'chip-coral'
   return 'chip-amber'
 })
+const statusColor = computed(() => {
+  const s = authStore.user?.verificationStatus
+  if (s === 'APPROVED') return 'var(--mm-emerald)'
+  if (s === 'REJECTED') return 'var(--mm-coral)'
+  return '#F59E0B'
+})
+
+const statCards = computed(() => [
+  {
+    label: 'Total Lessons', value: stats.value.totalLessons,
+    color: 'var(--mm-gold-lt)', bg: 'rgba(212,168,83,0.12)',
+    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A853" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>`,
+  },
+  {
+    label: 'Total Bookings', value: stats.value.totalBookings,
+    color: 'var(--mm-teal)', bg: 'rgba(42,157,159,0.12)',
+    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A9D9F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  },
+  {
+    label: 'Total Students', value: stats.value.totalStudents,
+    color: 'var(--mm-emerald)', bg: 'rgba(56,168,130,0.12)',
+    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38A882" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>`,
+  },
+  {
+    label: 'Total Earnings', value: `Rs ${stats.value.totalEarnings.toLocaleString()}`,
+    color: 'var(--mm-copper)', bg: 'rgba(192,123,80,0.12)',
+    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C07B50" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
+  },
+])
+
+const quickActions = [
+  { label: 'Create New Lesson', desc: 'Publish a lesson for students', path: '/dashboard/tutor/create-lesson', bg: 'rgba(212,168,83,0.1)', icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A853" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>` },
+  { label: 'Manage Lessons',    desc: 'Edit or remove your lessons',  path: '/dashboard/tutor/lessons',       bg: 'rgba(42,157,159,0.1)', icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2A9D9F" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>` },
+  { label: 'View Bookings',     desc: 'Manage student bookings',      path: '/dashboard/tutor/bookings',      bg: 'rgba(56,168,130,0.1)', icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38A882" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>` },
+  { label: 'View Earnings',     desc: 'Track your revenue',           path: '/dashboard/tutor/earnings',      bg: 'rgba(192,123,80,0.1)', icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C07B50" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>` },
+]
 
 const fetchStats = async () => {
   try {
@@ -181,100 +216,162 @@ const getInitials = (name: string) =>
 const formatDate = (d: string) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
 
-const payBadge = (s: string) => ({ 'badge-green': s === 'Paid', 'badge-amber': s === 'Pending', 'badge-red': s === 'Failed' })
+const payBadge = (s: string) => ({ 'badge-emerald': s === 'Paid', 'badge-amber': s === 'Pending', 'badge-coral': s === 'Failed' })
 const statusBadge = (s: string) => ({
-  'badge-green': s === 'Confirmed' || s === 'Completed',
+  'badge-emerald': s === 'Confirmed' || s === 'Completed',
   'badge-amber': s === 'Pending Payment',
-  'badge-red': s === 'Cancelled',
+  'badge-coral': s === 'Cancelled',
 })
 
 onMounted(fetchStats)
 </script>
 
 <style scoped>
-.overview-page { padding: 0; max-width: 1400px; margin: 0 auto; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
-.page-title { font-size: 30px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.5px; }
-.page-subtitle { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
-.create-btn { padding: 10px 20px; background: linear-gradient(90deg,#9754CB,#DEACF5); color: white; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; transition: all 0.2s; }
-.create-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(151,84,203,0.25); }
-
-.loading-state { display: flex; flex-direction: column; align-items: center; padding: 80px 20px; gap: 16px; }
-.spinner { width: 48px; height: 48px; border: 4px solid rgba(151,84,203,0.1); border-top-color: #9754CB; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-state p { color: rgba(255,255,255,0.65); font-size: 15px; }
-
-/* Stat cards */
-.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-.stat-card {
-  background: white; border: 2px solid #DEACF5; border-radius: 14px; padding: 20px;
-  display: flex; align-items: center; gap: 16px;
-  box-shadow: 0 4px 12px rgba(151,84,203,0.08); transition: all 0.2s;
+.t-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  position: relative;
 }
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(151,84,203,0.14); }
-.earnings-card { background: linear-gradient(135deg, #9754CB, #6237A0); border-color: #6237A0; }
-.earnings-card .stat-value, .earnings-card .stat-label { color: white; }
-.stat-icon { font-size: 32px; line-height: 1; }
-.stat-value { font-size: 26px; font-weight: 800; color: #ffffff; line-height: 1.1; }
-.stat-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+.t-glow {
+  position: fixed; top: 0; right: 0;
+  width: 500px; height: 300px; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(212,168,83,0.04) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+/* Header */
+.t-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 1rem; flex-wrap: wrap;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--mm-warm-line);
+}
+.t-greeting { font-size: 0.8rem; color: var(--mm-sand); font-family: 'DM Sans', sans-serif; margin-bottom: 0.25rem; }
+.t-title   { font-size: 2rem; color: var(--mm-ivory); line-height: 1.1; }
+.t-note    { color: var(--mm-gold); }
+.t-sub     { font-size: 0.875rem; color: var(--mm-sand); font-family: 'DM Sans', sans-serif; margin-top: 0.25rem; }
+
+/* Loading */
+.t-loading { display: flex; flex-direction: column; align-items: center; padding: 5rem 0; gap: 1rem; }
+.t-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--mm-warm-line);
+  border-top-color: var(--mm-gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Stat grid */
+.t-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.t-stat-card {
+  background: var(--mm-carbon);
+  border: 1px solid var(--mm-warm-line);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex; align-items: center; gap: 1rem;
+  transition: all 0.25s ease;
+}
+.t-stat-card:hover {
+  border-color: rgba(212,168,83,0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.t-stat-icon {
+  width: 46px; height: 46px; border-radius: 0.75rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.t-stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1.1; font-family: 'DM Serif Display', serif; }
+.t-stat-label { font-size: 0.7rem; font-weight: 600; color: var(--mm-stone); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.15rem; font-family: 'DM Sans', sans-serif; }
 
 /* Cards */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.card {
-  background: white; border: 2px solid #DEACF5; border-radius: 14px; padding: 24px;
-  box-shadow: 0 4px 12px rgba(151,84,203,0.07);
+.t-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.t-mt { margin-top: 1.25rem; }
+.t-card {
+  background: var(--mm-carbon);
+  border: 1px solid var(--mm-warm-line);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
 }
-.mt-6 { margin-top: 20px; }
-.card-title { font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 18px; }
-.card-link { color: #9754CB; font-size: 13px; font-weight: 600; text-decoration: none; margin-top: 16px; display: inline-block; }
-.card-link:hover { color: #6237A0; }
+.t-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.t-card-title { font-size: 1.05rem; color: var(--mm-ivory); }
+.t-card-link { font-size: 0.8rem; color: var(--mm-gold); font-weight: 600; text-decoration: none; font-family: 'DM Sans', sans-serif; transition: color 0.2s; }
+.t-card-link:hover { color: var(--mm-gold-lt); }
+
+.t-status-chip {
+  display: inline-flex; align-items: center; padding: 0.2rem 0.65rem;
+  border-radius: 2rem; font-size: 0.72rem; font-weight: 700; border: 1px solid;
+  font-family: 'DM Sans', sans-serif;
+}
+.chip-emerald { background: rgba(56,168,130,0.1); border-color: rgba(56,168,130,0.25); color: var(--mm-emerald); }
+.chip-coral   { background: rgba(224,112,96,0.1); border-color: rgba(224,112,96,0.25); color: var(--mm-coral); }
+.chip-amber   { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); color: #F59E0B; }
 
 /* Profile grid */
-.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.profile-item { display: flex; flex-direction: column; gap: 3px; }
-.profile-label { font-size: 11px; font-weight: 700; color: #9754CB; text-transform: uppercase; }
-.profile-value { font-size: 14px; font-weight: 600; color: #ffffff; }
-
-.status-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.chip-green { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-.chip-amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-.chip-red { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.t-profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-bottom: 1.25rem; }
+.t-profile-item { display: flex; flex-direction: column; gap: 0.2rem; }
+.t-profile-label { font-size: 0.65rem; font-weight: 700; color: var(--mm-gold); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'DM Sans', sans-serif; }
+.t-profile-value { font-size: 0.9rem; font-weight: 600; color: var(--mm-ivory); font-family: 'DM Sans', sans-serif; }
 
 /* Quick actions */
-.quick-actions { display: flex; flex-direction: column; gap: 10px; }
-.quick-btn {
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-  background: rgba(151,84,203,0.05); border: 1.5px solid rgba(151,84,203,0.15);
-  border-radius: 10px; text-decoration: none; color: #ffffff; font-size: 14px; font-weight: 600;
-  transition: all 0.2s;
+.t-quick-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.t-quick-btn {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 0.875rem; border-radius: 0.75rem;
+  border: 1px solid var(--mm-warm-line); background: transparent;
+  text-decoration: none; color: var(--mm-ivory);
+  transition: all 0.2s ease;
 }
-.quick-btn:hover { background: rgba(151,84,203,0.1); border-color: rgba(151,84,203,0.3); transform: translateX(4px); }
-.quick-icon { font-size: 18px; }
-
-/* Activity table */
-.empty-activity { text-align: center; padding: 32px; color: rgba(255,255,255,0.55); font-size: 14px; }
-.activity-table-wrap { overflow-x: auto; border-radius: 10px; border: 1.5px solid #DEACF5; }
-.activity-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.activity-table thead { background: linear-gradient(90deg,#9754CB,#DEACF5); }
-.activity-table th { padding: 12px 14px; color: white; font-weight: 700; text-align: left; font-size: 11px; text-transform: uppercase; }
-.activity-row { border-bottom: 1px solid #E5D9F0; }
-.activity-row:hover { background: #F8F4FF; }
-.activity-table td { padding: 12px 14px; color: #28104E; vertical-align: middle; }
-.student-cell { display: flex; align-items: center; gap: 8px; }
-.student-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#9754CB,#DEACF5); color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.lesson-name { font-weight: 600; }
-.date-cell { color: rgba(255,255,255,0.7); white-space: nowrap; }
-
-.badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-.badge-green { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-.badge-amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-.badge-red { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-
-@media (max-width: 1024px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 768px) {
-  .stat-grid { grid-template-columns: 1fr 1fr; }
-  .two-col { grid-template-columns: 1fr; }
-  .page-title { font-size: 22px; }
+.t-quick-btn:hover { background: var(--mm-onyx); border-color: rgba(212,168,83,0.2); transform: translateX(3px); }
+.t-quick-icon {
+  width: 34px; height: 34px; border-radius: 0.6rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-@media (max-width: 480px) { .stat-grid { grid-template-columns: 1fr; } }
+.t-quick-label { font-size: 0.875rem; font-weight: 600; color: var(--mm-ivory); font-family: 'DM Sans', sans-serif; }
+.t-quick-desc  { font-size: 0.72rem; color: var(--mm-stone); font-family: 'DM Sans', sans-serif; margin-top: 0.05rem; }
+.t-quick-arrow { color: var(--mm-stone); margin-left: auto; flex-shrink: 0; transition: transform 0.2s; }
+.t-quick-btn:hover .t-quick-arrow { transform: translateX(3px); color: var(--mm-gold-lt); }
+
+/* Table */
+.t-empty { display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem; text-align: center; }
+.t-empty p { font-size: 0.875rem; color: var(--mm-stone); font-family: 'DM Sans', sans-serif; }
+
+.t-table-wrap { overflow-x: auto; border-radius: 0.75rem; border: 1px solid var(--mm-warm-line); }
+.t-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.t-table thead { background: rgba(212,168,83,0.06); }
+.t-table th {
+  padding: 0.75rem 1rem; color: var(--mm-gold); font-weight: 700;
+  text-align: left; font-size: 0.68rem; text-transform: uppercase;
+  letter-spacing: 0.08em; font-family: 'DM Sans', sans-serif;
+  border-bottom: 1px solid var(--mm-warm-line);
+}
+.t-row { border-bottom: 1px solid var(--mm-warm-line); transition: background 0.15s; }
+.t-row:last-child { border-bottom: none; }
+.t-row:hover { background: rgba(255,255,255,0.02); }
+.t-table td { padding: 0.875rem 1rem; color: var(--mm-ivory); vertical-align: middle; font-family: 'DM Sans', sans-serif; }
+.t-student { display: flex; align-items: center; gap: 0.6rem; }
+.t-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--mm-gold-dk), var(--mm-copper));
+  color: var(--mm-ink); font-size: 0.65rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.t-lesson-name { font-weight: 600; color: var(--mm-cream); }
+.t-date { color: var(--mm-stone); white-space: nowrap; }
+
+.t-badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 700; border: 1px solid; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+.badge-emerald { background: rgba(56,168,130,0.1);  border-color: rgba(56,168,130,0.25); color: var(--mm-emerald); }
+.badge-amber   { background: rgba(245,158,11,0.1);  border-color: rgba(245,158,11,0.25); color: #F59E0B; }
+.badge-coral   { background: rgba(224,112,96,0.1);  border-color: rgba(224,112,96,0.25); color: var(--mm-coral); }
+
+@media (max-width: 1024px) { .t-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px)  { .t-two-col { grid-template-columns: 1fr; } .t-stat-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px)  { .t-stat-grid { grid-template-columns: 1fr; } }
 </style>
